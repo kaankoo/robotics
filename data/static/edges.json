@@ -1,0 +1,708 @@
+{
+  "ndpr": [],
+  "heavyre": [],
+  "li": [],
+  "cu": [],
+  "feal": [],
+  "graphite": [],
+  "ndfeb": [
+    "ndpr",
+    "heavyre"
+  ],
+  "smco": [
+    "heavyre",
+    "cu"
+  ],
+  "cathode": [
+    "li"
+  ],
+  "steels": [
+    "feal"
+  ],
+  "polymers": [
+    "feal"
+  ],
+  "lube": [
+    "feal"
+  ],
+  "billet": [
+    "feal"
+  ],
+  "cfrp": [
+    "polymers"
+  ],
+  "castings": [
+    "feal"
+  ],
+  "powder": [
+    "feal",
+    "billet"
+  ],
+  "grind": [
+    "steels",
+    "billet"
+  ],
+  "hobbing": [
+    "steels",
+    "billet"
+  ],
+  "hardturn": [
+    "steels",
+    "billet"
+  ],
+  "mim": [
+    "powder",
+    "polymers"
+  ],
+  "am": [
+    "powder"
+  ],
+  "metrol": [
+    "grind",
+    "hardturn"
+  ],
+  "xroller": [
+    "steels",
+    "grind",
+    "lube"
+  ],
+  "linrail": [
+    "steels",
+    "grind",
+    "lube"
+  ],
+  "ballscrew": [
+    "steels",
+    "grind",
+    "hardturn"
+  ],
+  "bushings": [
+    "polymers",
+    "steels"
+  ],
+  "strainwave": [
+    "steels",
+    "hobbing",
+    "grind",
+    "xroller",
+    "lube"
+  ],
+  "cycloid": [
+    "steels",
+    "grind",
+    "xroller",
+    "lube"
+  ],
+  "planetary": [
+    "steels",
+    "hobbing",
+    "grind",
+    "lube"
+  ],
+  "qdd": [
+    "planetary",
+    "steels"
+  ],
+  "tendon": [
+    "cfrp",
+    "polymers",
+    "steels"
+  ],
+  "linact": [
+    "ballscrew",
+    "steels",
+    "grind"
+  ],
+  "frameless": [
+    "ndfeb",
+    "cu",
+    "steels",
+    "windings",
+    "magassy"
+  ],
+  "torquemotor": [
+    "ndfeb",
+    "cu",
+    "steels",
+    "windings"
+  ],
+  "servo": [
+    "frameless",
+    "magassy",
+    "windings"
+  ],
+  "magassy": [
+    "ndfeb",
+    "smco",
+    "steels"
+  ],
+  "windings": [
+    "cu",
+    "polymers"
+  ],
+  "jointmod": [
+    "frameless",
+    "strainwave",
+    "drives",
+    "brakes",
+    "encoders"
+  ],
+  "drives": [
+    "edgesoc",
+    "mcu",
+    "currentsense"
+  ],
+  "brakes": [
+    "steels",
+    "cu",
+    "polymers"
+  ],
+  "sea": [
+    "jointmod",
+    "steels",
+    "encoders"
+  ],
+  "fluidic": [
+    "steels",
+    "hardturn",
+    "lube"
+  ],
+  "thermact": [
+    "cu",
+    "billet",
+    "polymers"
+  ],
+  "encoders": [
+    "metrol",
+    "polymers"
+  ],
+  "resolver": [
+    "cu",
+    "steels",
+    "windings"
+  ],
+  "imu": [
+    "metrol"
+  ],
+  "jts": [
+    "steels",
+    "metrol"
+  ],
+  "currentsense": [
+    "cu"
+  ],
+  "cam": [
+    "metrol"
+  ],
+  "depth": [
+    "cam",
+    "metrol"
+  ],
+  "lidar": [
+    "cam",
+    "metrol"
+  ],
+  "radar": [
+    "metrol"
+  ],
+  "tactile": [
+    "cam",
+    "polymers",
+    "jts"
+  ],
+  "event": [
+    "cam",
+    "metrol"
+  ],
+  "edgesoc": [],
+  "mcu": [],
+  "robomodule": [
+    "edgesoc",
+    "mcu",
+    "determinism"
+  ],
+  "traincompute": [],
+  "determinism": [
+    "mcu"
+  ],
+  "cells": [
+    "cathode",
+    "graphite",
+    "cu"
+  ],
+  "pack": [
+    "cells",
+    "mcu",
+    "thermact"
+  ],
+  "powerstage": [
+    "cu",
+    "mcu"
+  ],
+  "tether": [
+    "cu",
+    "polymers"
+  ],
+  "dock": [
+    "pack",
+    "powerstage",
+    "cu"
+  ],
+  "links": [
+    "billet",
+    "cfrp",
+    "castings",
+    "am",
+    "hardturn"
+  ],
+  "gripper": [
+    "jointmod",
+    "tendon",
+    "links",
+    "tactile",
+    "mcu"
+  ],
+  "hand": [
+    "mim",
+    "tendon",
+    "frameless",
+    "tactile",
+    "encoders",
+    "mcu"
+  ],
+  "toolchange": [
+    "steels",
+    "hardturn",
+    "safetyio"
+  ],
+  "cabling": [
+    "cu",
+    "polymers",
+    "tether"
+  ],
+  "ingress": [
+    "polymers",
+    "bushings"
+  ],
+  "cm": [
+    "links",
+    "jointmod",
+    "robomodule",
+    "pack",
+    "cabling",
+    "ingress"
+  ],
+  "harness": [
+    "cu",
+    "cabling",
+    "polymers"
+  ],
+  "calib": [
+    "cm",
+    "metrol",
+    "encoders",
+    "imu"
+  ],
+  "secondsource": [
+    "cm",
+    "strainwave",
+    "frameless",
+    "xroller"
+  ],
+  "currentloop": [
+    "mcu",
+    "drives"
+  ],
+  "fieldbus": [
+    "mcu",
+    "determinism",
+    "currentloop"
+  ],
+  "rtos": [
+    "mcu",
+    "edgesoc"
+  ],
+  "safetyio": [
+    "mcu",
+    "fieldbus",
+    "brakes"
+  ],
+  "otafw": [
+    "mcu",
+    "fieldbus",
+    "rtos"
+  ],
+  "ros": [
+    "rtos",
+    "robomodule"
+  ],
+  "zenoh": [
+    "rtos",
+    "fieldbus"
+  ],
+  "drivers": [
+    "ros",
+    "fieldbus",
+    "calib"
+  ],
+  "logging": [
+    "ros",
+    "zenoh"
+  ],
+  "bt": [
+    "ros",
+    "drivers"
+  ],
+  "kine": [
+    "drivers",
+    "calib"
+  ],
+  "dyn": [
+    "kine",
+    "links"
+  ],
+  "mpc": [
+    "dyn",
+    "kine",
+    "imu"
+  ],
+  "wbc": [
+    "mpc",
+    "dyn",
+    "kine",
+    "jts"
+  ],
+  "impedance": [
+    "wbc",
+    "jts",
+    "currentloop"
+  ],
+  "motionplan": [
+    "kine",
+    "dyn",
+    "bt"
+  ],
+  "teleop": [
+    "hand",
+    "gripper",
+    "links",
+    "cam",
+    "logging"
+  ],
+  "demo": [
+    "cam",
+    "depth",
+    "tactile",
+    "logging"
+  ],
+  "fleetdata": [
+    "logging",
+    "ros"
+  ],
+  "openx": [
+    "teleop",
+    "demo",
+    "fleetdata"
+  ],
+  "annot": [
+    "teleop",
+    "demo",
+    "openx"
+  ],
+  "physeng": [
+    "kine",
+    "dyn"
+  ],
+  "render": [
+    "physeng"
+  ],
+  "domainrand": [
+    "physeng",
+    "render"
+  ],
+  "scenegen": [
+    "render",
+    "openx"
+  ],
+  "benchsim": [
+    "physeng",
+    "domainrand",
+    "scenegen"
+  ],
+  "vla": [
+    "traincompute",
+    "annot",
+    "benchsim",
+    "openx"
+  ],
+  "diffpolicy": [
+    "annot",
+    "benchsim",
+    "teleop"
+  ],
+  "il": [
+    "teleop",
+    "annot"
+  ],
+  "rl": [
+    "physeng",
+    "domainrand",
+    "benchsim"
+  ],
+  "worldmodel": [
+    "traincompute",
+    "annot",
+    "scenegen"
+  ],
+  "rfm": [
+    "vla",
+    "diffpolicy",
+    "rl",
+    "worldmodel"
+  ],
+  "benchmark": [
+    "benchsim",
+    "cm",
+    "calib"
+  ],
+  "reliability": [
+    "cm",
+    "secondsource",
+    "jointmod"
+  ],
+  "machsafety": [
+    "safetyio",
+    "fieldbus"
+  ],
+  "servicesafety": [
+    "machsafety",
+    "impedance",
+    "tactile"
+  ],
+  "certbody": [
+    "machsafety",
+    "servicesafety",
+    "reliability"
+  ],
+  "failure": [
+    "safetyio",
+    "reliability",
+    "logging"
+  ],
+  "taskplan": [
+    "rfm",
+    "vla",
+    "bt"
+  ],
+  "recovery": [
+    "impedance",
+    "tactile",
+    "taskplan"
+  ],
+  "remoteassist": [
+    "logging",
+    "taskplan",
+    "cam"
+  ],
+  "intervention": [
+    "fleetdata",
+    "remoteassist",
+    "recovery"
+  ],
+  "hri": [
+    "servicesafety",
+    "taskplan",
+    "cam"
+  ],
+  "fleetops": [
+    "taskplan",
+    "interop",
+    "dock"
+  ],
+  "ota": [
+    "otafw",
+    "logging",
+    "fleetops"
+  ],
+  "roc": [
+    "remoteassist",
+    "fleetops",
+    "intervention"
+  ],
+  "service": [
+    "secondsource",
+    "calib",
+    "roc"
+  ],
+  "interop": [
+    "ros",
+    "zenoh",
+    "fieldbus"
+  ],
+  "pickpack": [
+    "gripper",
+    "vla",
+    "depth",
+    "motionplan",
+    "taskplan"
+  ],
+  "palletise": [
+    "links",
+    "cycloid",
+    "motionplan",
+    "depth",
+    "safetyio"
+  ],
+  "weld": [
+    "links",
+    "servo",
+    "metrol",
+    "motionplan",
+    "pendant"
+  ],
+  "assemble": [
+    "gripper",
+    "hand",
+    "impedance",
+    "jts",
+    "cam",
+    "calib"
+  ],
+  "inspect": [
+    "cam",
+    "depth",
+    "metrol",
+    "motionplan"
+  ],
+  "intralog": [
+    "linrail",
+    "lidar",
+    "fleetops",
+    "pack",
+    "dock"
+  ],
+  "clean": [
+    "lidar",
+    "cam",
+    "pack",
+    "fleetops"
+  ],
+  "agri": [
+    "gripper",
+    "vla",
+    "lidar",
+    "radar",
+    "pack"
+  ],
+  "surg": [
+    "hand",
+    "encoders",
+    "fluidic",
+    "certbody",
+    "calib"
+  ],
+  "avdrone": [
+    "lidar",
+    "radar",
+    "edgesoc",
+    "pack",
+    "imu"
+  ],
+  "lastmile": [
+    "lidar",
+    "cam",
+    "pack",
+    "fleetops",
+    "remoteassist"
+  ],
+  "construct": [
+    "cycloid",
+    "linact",
+    "lidar",
+    "certbody",
+    "taskplan"
+  ],
+  "pendant": [
+    "safetyio",
+    "fieldbus",
+    "mcu"
+  ],
+  "nlprog": [
+    "taskplan",
+    "vla",
+    "ros"
+  ],
+  "commission": [
+    "physeng",
+    "render",
+    "motionplan",
+    "kine"
+  ],
+  "perimeter": [
+    "safetyio",
+    "machsafety"
+  ],
+  "ssm": [
+    "depth",
+    "servicesafety",
+    "impedance"
+  ],
+  "raas": [
+    "fleetops",
+    "service"
+  ],
+  "capexpolicy": [
+    "machsafety",
+    "certbody"
+  ],
+  "exportctl": [
+    "frameless",
+    "strainwave",
+    "edgesoc",
+    "traincompute"
+  ],
+  "liability": [
+    "certbody",
+    "servicesafety",
+    "machsafety"
+  ],
+  "mechip": [
+    "strainwave",
+    "cycloid",
+    "encoders"
+  ],
+  "labourlaw": [
+    "servicesafety",
+    "machsafety"
+  ],
+  "payback": [
+    "pickpack",
+    "palletise",
+    "assemble",
+    "intralog",
+    "weld",
+    "raas",
+    "capexpolicy"
+  ],
+  "labourshift": [
+    "payback",
+    "labourlaw"
+  ],
+  "refurb": [
+    "cm",
+    "calib",
+    "service",
+    "strainwave"
+  ],
+  "recycle": [
+    "ndfeb",
+    "cathode",
+    "cu",
+    "billet"
+  ],
+  "decom": [
+    "refurb",
+    "recycle",
+    "pack"
+  ]
+}

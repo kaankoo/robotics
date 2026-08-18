@@ -1,0 +1,150 @@
+{
+  "meta": {
+    "updated": "2026-08-18",
+    "framing": "This is an exposure map, not a prediction. It says what sits downstream of a link in the dependency graph, and then what engineering analysis says would reroute and what would not.",
+    "note": "Removing a station and walking the graph gives reach: every station that depends on it downstream. Reach is arithmetic; damage is substitutability.",
+    "tiers": [
+      { "id": "removed", "label": "Removed", "note": "The station the scenario removes from the stack." },
+      { "id": "dead", "label": "Dead-ends", "note": "No viable substitute exists on a timescale anyone would call a response." },
+      { "id": "reroute", "label": "Reroutes", "note": "A substitute exists; the entry estimates the lead time required to qualify it." },
+      { "id": "reach", "label": "Downstream", "note": "Derived from the dependency graph and nothing else." },
+      { "id": "clear", "label": "Not downstream", "note": "No topological path from the removed station." }
+    ]
+  },
+  "faults": [
+    {
+      "id": "heavyre-embargo",
+      "title": "Heavy rare earth export embargo",
+      "sub": "dysprosium, terbium, and the thermal limit of high-torque motors",
+      "removes": ["heavyre"],
+      "leadTimeYears": 4,
+      "precedent": "neodymium-magnet",
+      "granularity": "Covers Dy and Tb ionic clay separation in southern China.",
+      "essay": "Over 90% of global heavy rare earth (Dysprosium and Terbium) separation is concentrated in China. Heavy rare earths are diffused into permanent magnet grain boundaries to prevent demagnetization at high stator operating temperatures (120–180 °C). Without Dy/Tb, permanent magnet motors must derate continuous torque by 30–40% or switch to heavy induction / switched-reluctance architectures.",
+      "reroutes": [
+        { "station": "ndfeb", "how": "Grain Boundary Diffusion (GBD) technology reduces Dy content from 8% to 1.5%. Dysprosium-free motor designs require larger frame sizes and active liquid cooling.", "leadTimeYears": 3 },
+        { "station": "servo", "how": "Motor drives can compensate for lower magnetic remanence with advanced field-weakening algorithms, at the cost of higher I²R resistive heating.", "leadTimeYears": 2 }
+      ],
+      "deadEnds": [
+        { "station": "frameless", "why": "High-torque-density compact frameless motors in robotic wrists and ankles cannot meet payload-to-weight targets without high-coercivity NdFeB magnets." }
+      ],
+      "source": { "who": "USGS / Oxford Institute for Energy Studies", "what": "Rare Earth Supply Chains in Robotics & EVs", "url": null }
+    },
+    {
+      "id": "strainwave-disruption",
+      "title": "Hotaka precision gearing disruption",
+      "sub": "an earthquake or factory fire in Azumino, Nagano",
+      "removes": ["strainwave"],
+      "leadTimeYears": 3,
+      "precedent": "musser-harmonic-drive",
+      "granularity": "Harmonic Drive Systems (Hotaka) and Leaderdrive (Suzhou) supply over 80% of global strain-wave gear sets.",
+      "essay": "Strain-wave gearing is the single deepest mechanical hardware moat in robotics. Flexsplines require specialized ESR alloy steel cleanliness, sub-micron conjugate tooth grinding, and decades of fatigue metallurgy. A sudden loss of Nagano capacity halts collaborative robot and humanoid arm assembly worldwide.",
+      "reroutes": [
+        { "station": "jointmod", "how": "Leaderdrive (Suzhou) and Nidec-Shimpo offer second-source strain-wave reducers, but expanding precision gear grinding lines requires 24+ months of CNC tool delivery.", "leadTimeYears": 2 },
+        { "station": "qdd", "how": "Direct-drive and low-ratio planetary gearings can replace harmonic drives in leg joints, but are too bulky for wrists and dexterous hands.", "leadTimeYears": 3 }
+      ],
+      "deadEnds": [
+        { "station": "hand", "why": "Compact dexterous robotic hands require micro-harmonic gearheads (<20 mm diameter); no planetary alternative fits within anthropomorphic human hand envelopes." }
+      ],
+      "source": { "who": "Harmonic Drive Systems / Leaderdrive", "what": "Annual Reports & Technical Documentation", "url": null }
+    },
+    {
+      "id": "cycloid-disruption",
+      "title": "RV cycloidal reducer chokepoint",
+      "sub": "loss of high-payload robotic base joint gearheads",
+      "removes": ["cycloid"],
+      "leadTimeYears": 3,
+      "precedent": "cycloid-reducer",
+      "granularity": "Nabtesco (Tsu plant) holds ~60% global share of RV cycloidal speed reducers.",
+      "essay": "Heavy automotive spot-welding and foundry robot arms (100–1000 kg payload) depend on dual-pin cycloidal gearheads for shock-load rigidity and zero backlash under extreme emergency e-stop torques.",
+      "reroutes": [
+        { "station": "links", "how": "Spinea (Slovakia) and Chinese cycloidal suppliers can qualify replacement gearboxes for secondary joints after 18 months of endurance bench testing.", "leadTimeYears": 2 }
+      ],
+      "deadEnds": [
+        { "station": "weld", "why": "Automotive body-shop robotic welding lines cannot substitute unproven cycloidal reducers without voiding OEM 10-year structural reliability warranties." }
+      ],
+      "source": { "who": "Nabtesco Corporation", "what": "Precision Equipment Whitepaper", "url": null }
+    },
+    {
+      "id": "sensor-asic-shortage",
+      "title": "Optical encoder graduation disc disruption",
+      "sub": "loss of sub-micron absolute angle feedback",
+      "removes": ["encoders"],
+      "leadTimeYears": 2,
+      "precedent": "optical-rotary-encoder",
+      "granularity": "Dr. Johannes Heidenhain and Renishaw dominate 20+ bit absolute optical encoder code discs.",
+      "essay": "Kinematic positioning accuracy and motor commutation depend on dual absolute optical encoders on joint input and output shafts. Optical discs require photolithographic chrome-on-glass deposition.",
+      "reroutes": [
+        { "station": "jointmod", "how": "Inductive and magnetic rotary encoder rings (RLS, Posital) provide rugged feedback, but suffer 2–4× higher angular non-linearity error.", "leadTimeYears": 1 }
+      ],
+      "deadEnds": [],
+      "source": { "who": "Heidenhain / Renishaw", "what": "Technical Specifications", "url": null }
+    },
+    {
+      "id": "ai-compute-sanctions",
+      "title": "Advanced Edge NPU export sanctions",
+      "sub": "export controls on edge inference SoCs (>100 TOPS)",
+      "removes": ["edgesoc", "traincompute"],
+      "leadTimeYears": 3,
+      "precedent": "vla-openx",
+      "granularity": "NVIDIA Jetson Thor, Qualcomm Robotics RB5, and cloud GPU clusters.",
+      "essay": "Real-time Vision-Language-Action (VLA) foundation models require >100 TFLOPS of edge tensor compute to run 30 Hz closed-loop visual servoing without cloud latency.",
+      "reroutes": [
+        { "station": "diffpolicy", "how": "Quantized small-parameter diffusion policies (<50M parameters) can run on domestic 28nm automotive MCUs with reduced generalization scope.", "leadTimeYears": 2 }
+      ],
+      "deadEnds": [
+        { "station": "vla", "why": "Multi-billion-parameter multimodal foundation models cannot run on low-power legacy silicon without unacceptable multi-second inference lags." }
+      ],
+      "source": { "who": "CSIS / BIS", "what": "Semiconductor Export Controls and Physical AI", "url": null }
+    },
+    {
+      "id": "chassis-foundry-fire",
+      "title": "Large robot arm casting foundry loss",
+      "sub": "cast iron and topology-optimized structural members",
+      "removes": ["castings"],
+      "leadTimeYears": 2,
+      "precedent": "unimate-arm",
+      "granularity": "Ductile cast iron (GJS-500) foundry casting facilities for arm links.",
+      "essay": "Industrial robot arms achieve extreme torsional stiffness through hollow cast-iron structural castings. Moving sand-casting patterns and qualifying structural resonance modes takes 12–18 months.",
+      "reroutes": [
+        { "station": "links", "how": "Welded structural steel plates or CNC-machined aircraft-grade aluminium billets can replace cast housings with minor weight and cost penalties.", "leadTimeYears": 1 }
+      ],
+      "deadEnds": [],
+      "source": { "who": "Fanuc / KUKA", "what": "Manufacturing Operations Manual", "url": null }
+    },
+    {
+      "id": "remote-assist-latency",
+      "title": "Remote teleoperation network failure",
+      "sub": "cellular/satellite link degradation in teleoperation centers",
+      "removes": ["teleop", "remoteassist"],
+      "leadTimeYears": 1,
+      "precedent": "ros-middleware",
+      "granularity": "Ultra-low-latency 5G/Starlink video and haptic teleoperation streaming.",
+      "essay": "Early commercial humanoid and mobile robot fleets rely on human remote assistance (ROC) to unblock robots when autonomous policies get stuck. If network latency exceeds 150 ms, teleoperation becomes physically impossible.",
+      "reroutes": [
+        { "station": "recovery", "how": "Autonomous local recovery behaviors (e.g. backing up, dropping grasp, retrying) allow machines to fail safely without remote human intervention.", "leadTimeYears": 1 }
+      ],
+      "deadEnds": [
+        { "station": "payback", "why": "Without remote teleoperation fallbacks, robot fleets in unstructured environments stall frequently, destroying economic customer ROI." }
+      ],
+      "source": { "who": "A3 Robotics", "what": "Remote Operation Center Reliability Standards", "url": null }
+    },
+    {
+      "id": "statutory-safety-freeze",
+      "title": "Statutory collaborative safety freeze",
+      "sub": "regulatory pause on uncaged humanoid robots in human spaces",
+      "removes": ["machsafety", "servicesafety", "perimeter"],
+      "leadTimeYears": 2,
+      "precedent": "optical-safety-scanner",
+      "granularity": "ISO 10218, ISO/TS 15066, and EU Machinery Regulation 2023/1230.",
+      "essay": "A high-profile safety incident involving an uncaged high-power robot triggers statutory enforcement of strict 0.5 m/s speed limits and certified perimeter cages in warehouses and factories.",
+      "reroutes": [
+        { "station": "ssm", "how": "Certified 3D time-of-flight safety cameras dynamically slow down robots when humans enter warning envelopes, maintaining compliant operations.", "leadTimeYears": 2 }
+      ],
+      "deadEnds": [
+        { "station": "humanoid", "why": "Full-speed autonomous humanoid operation in mixed human-robot warehouse aisles is halted pending certified functional safety architectures." }
+      ],
+      "source": { "who": "ISO / OSHA", "what": "Industrial Robot Safety Standards Updates", "url": null }
+    }
+  ]
+}

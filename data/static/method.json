@@ -1,0 +1,135 @@
+{
+  "meta": {
+    "updated": "2026-08-18",
+    "vintage": "mid-2026"
+  },
+  "intro": "This site makes a lot of claims. This page says where each kind of claim comes from, which parts are measurement and which are judgement, and where it is most likely to be wrong. Nothing here is hidden behind a methodology PDF — the same JSON files that render the site render this page, so it cannot drift out of date relative to what you are reading.",
+  "reading": [
+    {
+      "term": "Stratum",
+      "def": "One layer of the physical-intelligence stack. There are 27, ordered by physical depth — 01 is rare earth and metal ore in the earth, 27 is the return, recycling, and economic residue. The ordering is a claim about physical and functional dependency, not about importance."
+    },
+    {
+      "term": "Station",
+      "def": "A distinct technology, mechanism, material, or market inside a stratum, with its own physics and incumbents. There are 150. A station is drawn where an engineer would recognise a physical or algorithmic boundary, not where a financial analyst would."
+    },
+    {
+      "term": "Criticality",
+      "def": "The coloured pips on a card, 0–3. Three magenta pips means a genuine single point of failure for the whole robotics industry (e.g. strain-wave flexsplines or NdPr heavy rare earths). This is a hand-assigned judgement about concentration and substitutability — it is the most subjective number on the site and it is not derived from data."
+    },
+    {
+      "term": "Dependency edge",
+      "def": "A directed link meaning this station cannot function without that one. They are written from physical, mechanical, and computational necessity, not from press co-mention — which is why the graph knows things no generic dataset does."
+    },
+    {
+      "term": "Organisation",
+      "def": "A company, institute, or state body operating at a station. There are 800+ across 40+ jurisdictions. Lists are illustrative of who matters at each link — they are not exhaustive, not ranked, and not a market-share estimate."
+    }
+  ],
+  "provenance": [
+    {
+      "class": "The 27 strata and 150 stations",
+      "kind": "judgement",
+      "who": "Hand-written for this site",
+      "detail": "Structure, ordering, prose and the choice of where one station ends and the next begins. Informed by public technical literature, vendor manuals, academic robotics papers, and earnings calls, but the taxonomy itself is an editorial claim.",
+      "vintage": "mid-2026"
+    },
+    {
+      "class": "Criticality ratings",
+      "kind": "judgement",
+      "who": "Hand-assigned",
+      "detail": "A 0–3 read on how concentrated and how substitutable each link is. No formula. Where a computed concentration measure is shown, both are displayed side by side rather than one replacing the other.",
+      "vintage": "mid-2026"
+    },
+    {
+      "class": "Dependency graph",
+      "kind": "judgement",
+      "who": "Hand-written",
+      "detail": "Edges asserting physical and algorithmic necessity. Validated for acyclic soundness on every build — no orphan references, zero self-loops, every station reachable, and traincompute declared with zero upstream links.",
+      "vintage": "mid-2026"
+    },
+    {
+      "class": "Company lists and roles",
+      "kind": "curated",
+      "who": "Public sources & industrial directories",
+      "detail": "Compiled from manufacturer datasheets, trade press, and technical literature. Illustrative rather than exhaustive; inclusion is a claim that an organisation matters at that link.",
+      "vintage": "mid-2026"
+    },
+    {
+      "class": "Key figures on station cards",
+      "kind": "cited",
+      "who": "Public reporting & technical manuals",
+      "detail": "Torque densities, tolerances, gear ratios, efficiency percentages, and cycle times from public technical reporting through mid-2026.",
+      "vintage": "mid-2026"
+    },
+    {
+      "class": "Cascade arithmetic & parameters",
+      "kind": "derived",
+      "who": "First-principles engineering & physics",
+      "detail": "8-step multiplicative cascade tracking one hour of autonomous physical work across 3 machine classes back to raw mineral mass and electrical energy. Reconciled across 192 states.",
+      "vintage": "mid-2026"
+    },
+    {
+      "class": "Scale-corpus sizes on the Ruler",
+      "kind": "curated",
+      "who": "Vendor documentation & physical measurements",
+      "detail": "36 objects spanning 16 decades, from crystal lattice constants (0.84 nm) to the Earth's radius. Exact for defined standards, typical for production tolerances, approx for estimates.",
+      "vintage": "mid-2026"
+    },
+    {
+      "class": "Site coordinates on the Atlas",
+      "kind": "curated",
+      "who": "Corporate disclosures & public facility registries",
+      "detail": "56 key robotics manufacturing and mining sites with geodesic radii. Cross-checked with Bayan Obo rare earth pit and Harmonic Drive Hotaka manufacturing campus.",
+      "vintage": "mid-2026"
+    },
+    {
+      "class": "Invention and shipping dates on Lag",
+      "kind": "curated",
+      "who": "Primary research papers & patent filings",
+      "detail": "Capabilities spanning 1954 (Unimate patent) through modern foundation models, with confidence ratings and qualitative bottleneck categorizations.",
+      "vintage": "mid-2026"
+    },
+    {
+      "class": "Counterfactual shock scenarios on Faults",
+      "kind": "judgement",
+      "who": "Hand-written consequence mapping",
+      "detail": "8 shock scenarios mapping downstream reach and qualitative substitution barriers across the stack, plus statutory safety freeze.",
+      "vintage": "mid-2026"
+    }
+  ],
+  "limits": [
+    {
+      "title": "Criticality is a judgement, not a measurement",
+      "body": "The pips are the most influential and least defensible numbers on the site. They come from expert reading and industry analysis, not purely objective formulaic data."
+    },
+    {
+      "title": "Counting organisations measures the editing, not the industry",
+      "body": "Every station in this corpus names between four and eight organisations to ensure legibility, not as an exhaustive census of all operating firms worldwide."
+    },
+    {
+      "title": "The Cascade describes canonical machine configurations",
+      "body": "The Cascade models 3 machine classes (Industrial arm, Mobile manipulator, Humanoid). Real-world energy consumption and hardware wear vary significantly across specific payload cycles and duty profiles."
+    },
+    {
+      "title": "Spread across countries is not substitutability",
+      "body": "A stratum can contain suppliers across multiple countries while still being dependent on a single supplier for an irreplaceable sub-component."
+    },
+    {
+      "title": "The Faults view has no inventory modeling",
+      "body": "Downstream reach shows structural dependency paths; real-world supply chain buffer inventories (typically 3–9 months of stock) cushion short-term interruptions."
+    },
+    {
+      "title": "Everything is mid-2026 vintage",
+      "body": "Robotics foundation models, hardware unit costs, and supply chain capacities evolve rapidly. Treat data as of this vintage."
+    },
+    {
+      "title": "This is not investment advice",
+      "body": "No recommendations, price targets, or financial advice. The site is an educational tool and mental model for understanding physical intelligence."
+    }
+  ],
+  "corrections": {
+    "body": "The corpus is hand-curated and actively maintained. Corrections with technical sources are welcome — whether an inaccurate figure, a missing supplier, or an improved parameter derivation.",
+    "repo": "https://github.com/kaankoo/robotics"
+  }
+}

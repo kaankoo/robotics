@@ -1,0 +1,14 @@
+{
+  "updated": "2026-08-18",
+  "hashes": {
+    "src/core/app.js": "bbab6c3591652308ca75e07d08475ccb4bc922a8984166f942d6ea9193a391bc",
+    "src/core/data.js": "376369921aeef858f2fa4e1201a8f47ba9c5bec0b94e73e09682febc8fdedf3e",
+    "src/core/router.js": "91a4be74a51c7d41fdec283375fbfb3fd507c029742e22b67210fc0392bb7ce4",
+    "src/core/notes.js": "d4dae6bdf1809bcc7527ba9342244267e163ae9186f1d80f4f92cd3dff6a293d",
+    "src/lib/graph.js": "5a5c48860711fd64e8e00fd2d403708a25fde867c07823b541271fc71a9de5c4",
+    "src/lib/projection.js": "441f3b04d4b7c3b9da228181764a3b5fcc1db43a74f15a403a52e4439953f2b0",
+    "src/lib/tickers.js": "79db9b34ba70d1d446c8fe0721bf817d480181c1a21f668c78f78a64f498b9ea",
+    "scripts/world.mjs": "083032f55204d23062915261c1149a434df8da21de50d57cb67594cf4758d6d8",
+    "data/static/world.json": "29975cf63bd7b07011ece69a92e6142e412184562bd2677b4bde8a19a6acb716"
+  }
+}

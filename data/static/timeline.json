@@ -1,0 +1,219 @@
+{
+  "meta": {
+    "updated": "2026-08-18",
+    "span": [1950, 2028],
+    "now": 2026,
+    "note": "Every capability in this physical-intelligence stack has two dates: the year it first worked, and the year it arrived in volume. The distance between them is the lag.",
+    "definitions": {
+      "invented": "The year the capability was first demonstrated in a lab, patent, or working prototype.",
+      "shipped": "The year it reached high-volume industrial deployment or commercial series production.",
+      "lag": "shipped − invented. Where an entry has not shipped, it has no lag."
+    },
+    "confidence": [
+      { "id": "dated", "label": "Dated", "note": "Both years are documented and verified in technical literature." },
+      { "id": "contested", "label": "Contested", "note": "One date is an editorial judgement call depending on volume thresholds." },
+      { "id": "open", "label": "Not shipped", "note": "Early lab prototype or pilot testing; volume production date unconfirmed." }
+    ],
+    "waitedFor": [
+      { "id": "unsolved", "label": "The science", "note": "Kinematics, dynamics, contact mechanics, or control math was incomplete." },
+      { "id": "tooling", "label": "A machine", "note": "Machine tools, sub-micron grinding, or semiconductor lithography were missing." },
+      { "id": "economics", "label": "A better reason", "note": "Incumbent manual labor or hydraulic machinery was dramatically cheaper." },
+      { "id": "scale", "label": "Something to run on", "note": "Required GPU compute, fleet scale, or massive demonstration datasets." },
+      { "id": "demand", "label": "Someone to want it", "note": "Technology worked, but broad industrial demand took decades to develop." }
+    ]
+  },
+  "events": [
+    {
+      "id": "unimate-arm",
+      "stratum": 24,
+      "station": "weld",
+      "label": "The industrial robot arm (Unimate)",
+      "invented": 1954,
+      "shipped": 1961,
+      "waitedFor": "demand",
+      "confidence": "dated",
+      "note": "George Devol patented programmed article transfer in 1954; Joseph Engelberger commercialized Unimate at GM Trenton die-casting in 1961.",
+      "source": { "who": "US Patent Office", "what": "US Patent 2,988,237 (George Devol)", "url": "https://patents.google.com/patent/US2988237A/en" }
+    },
+    {
+      "id": "musser-harmonic-drive",
+      "stratum": 6,
+      "station": "strainwave",
+      "label": "Strain-wave gearing (Harmonic Drive)",
+      "invented": 1955,
+      "shipped": 1964,
+      "waitedFor": "tooling",
+      "confidence": "dated",
+      "note": "C. Walton Musser invented strain-wave gearing in 1955. Aerospace and industrial robot joints adopted it for zero-backlash high-ratio reduction.",
+      "source": { "who": "US Patent Office", "what": "US Patent 2,906,143 (C. Walton Musser)", "url": "https://patents.google.com/patent/US2906143A/en" }
+    },
+    {
+      "id": "cycloid-reducer",
+      "stratum": 6,
+      "station": "cycloid",
+      "label": "RV cycloidal speed reducer",
+      "invented": 1926,
+      "shipped": 1985,
+      "waitedFor": "tooling",
+      "confidence": "contested",
+      "note": "Lorenz Braren patented the cycloidal principle in 1926. Nabtesco mastered sub-micron pin-wheel grinding in 1985, anchoring heavy robot base joints.",
+      "source": { "who": "Nabtesco Corp", "what": "History of Precision RV Reducers", "url": "https://precision.nabtesco.com/en/" }
+    },
+    {
+      "id": "neodymium-magnet",
+      "stratum": 2,
+      "station": "ndfeb",
+      "label": "Sintered NdFeB permanent magnets",
+      "invented": 1982,
+      "shipped": 1989,
+      "waitedFor": "tooling",
+      "confidence": "dated",
+      "note": "Masato Sagawa (Sumitomo) and John Croat (General Motors) developed Nd₂Fe₁₄B in 1982, quadrupling brushless motor torque density by 1989.",
+      "source": { "who": "IEEE", "what": "IEEE Milestone in Nd-Fe-B Permanent Magnets", "url": "https://ethw.org/Milestones:Neodymium-Iron-Boron_Magnets" }
+    },
+    {
+      "id": "foc-inverter",
+      "stratum": 15,
+      "station": "currentloop",
+      "label": "Field-Oriented Vector Control (FOC)",
+      "invented": 1971,
+      "shipped": 1992,
+      "waitedFor": "scale",
+      "confidence": "dated",
+      "note": "Felix Blaschke (Siemens) formulated vector control in 1971. Required fast digital signal processors (DSPs) before shipping in volume motor drives.",
+      "source": { "who": "Siemens", "what": "The Principle of Field Orientation (Blaschke)", "url": "https://ieeexplore.ieee.org/document/4157771" }
+    },
+    {
+      "id": "ethercat-fieldbus",
+      "stratum": 15,
+      "station": "fieldbus",
+      "label": "Deterministic EtherCAT fieldbus",
+      "invented": 2003,
+      "shipped": 2010,
+      "waitedFor": "demand",
+      "confidence": "dated",
+      "note": "Beckhoff Automation introduced EtherCAT in 2003. Delivered 100 Mbps sub-microsecond jitter synchronization across 100+ joint axes.",
+      "source": { "who": "ETG", "what": "EtherCAT Technology Group Standard", "url": "https://www.ethercat.org" }
+    },
+    {
+      "id": "ros-middleware",
+      "stratum": 16,
+      "station": "ros",
+      "label": "Robot Operating System (ROS / ROS 2)",
+      "invented": 2007,
+      "shipped": 2018,
+      "waitedFor": "scale",
+      "confidence": "dated",
+      "note": "Willow Garage created ROS in 2007. ROS 2 with DDS real-time middleware achieved enterprise production status by 2018.",
+      "source": { "who": "Open Robotics", "what": "ROS 2 Architecture and Design", "url": "https://docs.ros.org" }
+    },
+    {
+      "id": "ur-cobot",
+      "stratum": 8,
+      "station": "jointmod",
+      "label": "Lightweight collaborative robot (UR5)",
+      "invented": 2005,
+      "shipped": 2008,
+      "waitedFor": "unsolved",
+      "confidence": "dated",
+      "note": "Universal Robots developed the UR5 cobot in 2005, introducing modular joints, direct-teaching, and current-based collision detection.",
+      "source": { "who": "Universal Robots", "what": "The Cobot Revolution Whitepaper", "url": "https://www.universal-robots.com" }
+    },
+    {
+      "id": "mit-cheetah-qdd",
+      "stratum": 8,
+      "station": "qdd",
+      "label": "Proprioceptive Quasi-Direct Drive (QDD)",
+      "invented": 2012,
+      "shipped": 2019,
+      "waitedFor": "unsolved",
+      "confidence": "dated",
+      "note": "Sangbae Kim and Ben Katz pioneered low-inertia QDD actuators at MIT, eliminating gear shock fragility in quadruped and humanoid robots.",
+      "source": { "who": "MIT Biomimetic Lab", "what": "High-Bandwidth Proprioceptive Actuation", "url": "https://biomimetics.mit.edu" }
+    },
+    {
+      "id": "gelsight-sensor",
+      "stratum": 10,
+      "station": "tactile",
+      "label": "GelSight elastomeric tactile skin",
+      "invented": 2009,
+      "shipped": 2021,
+      "waitedFor": "tooling",
+      "confidence": "dated",
+      "note": "Edward Adelson invented GelSight at MIT in 2009. Miniaturized camera-based elastomer sensors reached volume series production by 2021.",
+      "source": { "who": "MIT CSAIL", "what": "Retrographic Sensing for High-Resolution Touch", "url": "https://gelsight.csail.mit.edu" }
+    },
+    {
+      "id": "mujoco-sim",
+      "stratum": 19,
+      "station": "physeng",
+      "label": "MuJoCo contact physics engine",
+      "invented": 2012,
+      "shipped": 2018,
+      "waitedFor": "unsolved",
+      "confidence": "dated",
+      "note": "Emo Todorov published MuJoCo in 2012. Acquired by DeepMind and open-sourced, becoming the standard contact simulator for robot RL.",
+      "source": { "who": "DeepMind / Todorov", "what": "MuJoCo: A framework for robot dynamics", "url": "https://mujoco.org" }
+    },
+    {
+      "id": "isaac-gym",
+      "stratum": 19,
+      "station": "domainrand",
+      "label": "GPU-parallel physics & domain randomization",
+      "invented": 2020,
+      "shipped": 2023,
+      "waitedFor": "scale",
+      "confidence": "dated",
+      "note": "NVIDIA Isaac Gym moved thousands of simulation environments onto tensor GPU cores, reducing months of robot RL training to minutes.",
+      "source": { "who": "NVIDIA", "what": "Isaac Gym: High Performance GPU-Based Physics Simulation", "url": "https://developer.nvidia.com/isaac-gym" }
+    },
+    {
+      "id": "diffusion-policy",
+      "stratum": 20,
+      "station": "diffpolicy",
+      "label": "Diffusion Policy for robotic manipulation",
+      "invented": 2023,
+      "shipped": 2025,
+      "waitedFor": "scale",
+      "confidence": "dated",
+      "note": "Cheng Chi et al. applied score-based diffusion models to generate multimodal robotic action trajectories from visual observations.",
+      "source": { "who": "Columbia / Stanford", "what": "Diffusion Policy: Visuomotor Policy Generation via Diffusion", "url": "https://diffusion-policy.cs.columbia.edu" }
+    },
+    {
+      "id": "vla-openx",
+      "stratum": 20,
+      "station": "vla",
+      "label": "Vision-Language-Action (VLA) foundation models",
+      "invented": 2023,
+      "shipped": 2026,
+      "waitedFor": "scale",
+      "confidence": "contested",
+      "note": "Open X-Embodiment, RT-2, and Physical Intelligence π0 combined multimodal web knowledge with robot token actions for zero-shot generalization.",
+      "source": { "who": "Open X-Embodiment Consortium", "what": "Open X-Embodiment: Robotic Learning Datasets and RT-X", "url": "https://robotics-transformer-x.github.io" }
+    },
+    {
+      "id": "dynamic-locomotion-wbc",
+      "stratum": 17,
+      "station": "wbc",
+      "label": "Whole-Body Dynamic Control & Locomotion",
+      "invented": 2006,
+      "shipped": 2020,
+      "waitedFor": "unsolved",
+      "confidence": "dated",
+      "note": "Pierre-Brice Wieber and Scott Kuindersma developed quadratic programming whole-body control, enabling Atlas to parkour in 2020.",
+      "source": { "who": "Boston Dynamics / MIT", "what": "Optimization-based Locomotion and Whole-Body Control", "url": "https://bostondynamics.com" }
+    },
+    {
+      "id": "optical-safety-scanner",
+      "stratum": 25,
+      "station": "ssm",
+      "label": "Time-of-flight safety laser scanner",
+      "invented": 1994,
+      "shipped": 2002,
+      "waitedFor": "tooling",
+      "confidence": "dated",
+      "note": "SICK AG introduced certified pulsed laser scanners, dynamically adjusting safety stopping zones as mobile robots navigate human workcells.",
+      "source": { "who": "SICK AG", "what": "Functional Safety for Mobile Platforms", "url": "https://www.sick.com" }
+    }
+  ]
+}

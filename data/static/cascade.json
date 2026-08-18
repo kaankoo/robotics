@@ -1,0 +1,135 @@
+{
+  "meta": {
+    "version": "1.0",
+    "unit": "1 hour of autonomous physical work",
+    "updated": "2026-08-18"
+  },
+  "assumptions": [
+    {
+      "id": "machine",
+      "label": "Machine class",
+      "default": 0,
+      "help": "The mechanical architecture and payload envelope of the autonomous robot executing the hour of work.",
+      "options": [
+        { "id": "arm", "label": "Industrial arm (6-axis)", "value": 800, "massKg": 35, "lifeHrs": 30000, "capexUSD": 45000 },
+        { "id": "amr_arm", "label": "Mobile manipulator (AMR+arm)", "value": 1400, "massKg": 85, "lifeHrs": 20000, "capexUSD": 75000 },
+        { "id": "humanoid", "label": "Humanoid robot (bipedal)", "value": 1200, "massKg": 65, "lifeHrs": 15000, "capexUSD": 95000 }
+      ]
+    },
+    {
+      "id": "duty",
+      "label": "Deployment duty",
+      "default": 2,
+      "help": "Annual operating hours based on 1-shift (8h), 2-shift (16h), or continuous 3-shift (24/7) facility operations.",
+      "options": [
+        { "id": "1shift", "label": "1 shift (2,000 h/yr)", "value": 2000 },
+        { "id": "2shift", "label": "2 shifts (4,000 h/yr)", "value": 4000 },
+        { "id": "3shift", "label": "3 shifts (6,000 h/yr)", "value": 6000 }
+      ]
+    },
+    {
+      "id": "policy",
+      "label": "Inference compute",
+      "default": 1,
+      "help": "Onboard neural processing power consumption across embedded Edge NPU, Hybrid Edge+VLA, or Cloud foundation reasoning.",
+      "options": [
+        { "id": "edge_npu", "label": "Edge NPU only (45W)", "value": 45 },
+        { "id": "hybrid_vla", "label": "Hybrid Edge + VLA (85W)", "value": 85 },
+        { "id": "cloud_vla", "label": "Cloud Foundation (250W)", "value": 250 }
+      ]
+    },
+    {
+      "id": "wage",
+      "label": "Human wage comparison",
+      "default": 0,
+      "help": "Prevailing fully-loaded hourly wage of manual human workers replaced or augmented in that jurisdiction.",
+      "options": [
+        { "id": "us_bls", "label": "US BLS warehouse ($28.00/h)", "value": 28.0 },
+        { "id": "de_union", "label": "Germany IG Metall ($55.00/h)", "value": 55.0 },
+        { "id": "jp_meti", "label": "Japan METI benchmark ($23.00/h)", "value": 23.0 },
+        { "id": "cn_tier1", "label": "China Tier-1 industrial ($8.50/h)", "value": 8.5 }
+      ]
+    }
+  ],
+  "constants": {
+    "cyclesPerHour": {
+      "label": "Joint cycles per hour",
+      "value": 7200,
+      "lo": 3600,
+      "hi": 14400,
+      "unit": "cycles/hr",
+      "derivation": "Average 2 cycles per second across 6–30 articulated joint degrees of freedom.",
+      "source": { "who": "ISO 9283 Performance Standard", "when": "2024" }
+    },
+    "gridCarbonGPerKWh": {
+      "label": "Grid carbon intensity",
+      "value": 380,
+      "lo": 180,
+      "hi": 650,
+      "unit": "gCO₂e/kWh",
+      "derivation": "Weighted global manufacturing grid electricity emissions intensity.",
+      "source": { "who": "IEA World Energy Outlook", "when": "2025" }
+    },
+    "embodiedSiliconGPerKg": {
+      "label": "Silicon per robot kg",
+      "value": 0.45,
+      "lo": 0.25,
+      "hi": 0.85,
+      "unit": "g/kg",
+      "derivation": "Total packaged semiconductor die mass per kg of finished mechatronic robot.",
+      "source": { "who": "Teardown analysis (SystemPlus / Yole)", "when": "2025" }
+    },
+    "refinedMetalFactor": {
+      "label": "Refined metal multiplier",
+      "value": 2.8,
+      "lo": 2.2,
+      "hi": 3.6,
+      "unit": "×",
+      "derivation": "Ratio of virgin refined metals (NdFeB, Cu, 100Cr6, Li) to finished robot mass.",
+      "source": { "who": "Fraunhofer IPA LCA Study", "when": "2024" }
+    },
+    "oreToRefinedRatio": {
+      "label": "Ore extraction ratio",
+      "value": 65,
+      "lo": 45,
+      "hi": 95,
+      "unit": "×",
+      "derivation": "Mass of raw mined ore (bastnäsite, bauxite, iron ore, spodumene) per unit of refined engineering material.",
+      "source": { "who": "USGS Mineral Commodity Summaries", "when": "2025" }
+    },
+    "maintOverheadFactor": {
+      "label": "Maintenance & spare ratio",
+      "value": 0.15,
+      "lo": 0.10,
+      "hi": 0.25,
+      "unit": "× capex",
+      "derivation": "Annual maintenance, spare joints, and grease replenishment as percentage of initial capex.",
+      "source": { "who": "A3 Robotics Cost Benchmark", "when": "2025" }
+    }
+  },
+  "chain": [
+    { "id": "work_hour", "name": "Autonomous Work Hour", "stratum": 24, "unit": "count", "note": "One continuous hour of physical task execution (picking, welding, transport, or assembly)." },
+    { "id": "joint_cycles", "name": "Actuator Joint Cycles", "stratum": 8, "unit": "count", "note": "Cumulative mechanical oscillation and rotation cycles across all arm and leg joints." },
+    { "id": "electrical_energy", "name": "Electrical Energy", "stratum": 12, "unit": "Wh", "note": "Total grid electricity drawn for joint actuation, holding stall torque, compute NPU, and sensors." },
+    { "id": "wear_fraction", "name": "Design Life Consumed", "stratum": 21, "unit": "", "note": "Fraction of the robot's certified MTBF / B10 mechanical life expended during this hour." },
+    { "id": "embodied_hardware", "name": "Amortized Hardware Mass", "stratum": 14, "unit": "g", "note": "Mass of physical robot chassis, motors, and reducers allocated to this single hour of service." },
+    { "id": "semiconductor_silicon", "name": "Amortized Silicon Mass", "stratum": 11, "unit": "g", "note": "Pure monocrystalline silicon die mass embodied in motor MCUs, GaN power stages, and edge NPUs." },
+    { "id": "refined_materials", "name": "Refined Engineering Alloys", "stratum": 2, "unit": "g", "note": "Virgin sintered NdFeB magnets, cathode chemicals, copper wire, and vacuum-melted gear steels." },
+    { "id": "lithosphere_ore", "name": "Lithosphere Mined Ore", "stratum": 1, "unit": "g", "note": "Total raw mined rock (bastnäsite rare earth ore, iron ore, bauxite, spodumene) extracted from the earth." }
+  ],
+  "branches": [
+    { "id": "capex_hourly", "name": "Hourly Hardware Amortisation", "stratum": 26, "unit": "$/h", "note": "Depreciation of initial machine purchase price over operational service life." },
+    { "id": "labor_arbitrage", "name": "Net Labor Arbitrage", "stratum": 27, "unit": "$/h", "note": "Net cost difference between manual human labor and the fully-loaded autonomous robot hour." },
+    { "id": "co2_hourly", "name": "Emissions Footprint", "stratum": 27, "unit": "g!", "note": "Grid greenhouse gas emissions generated per operational robot hour." }
+  ],
+  "stepSources": {
+    "work_hour": "Canonical terminal unit across all 3 machine classes.",
+    "joint_cycles": "Average 2 Hz cyclic motion across 6-to-30 DOF robotic joints.",
+    "electrical_energy": "Sum of motor mechanical output, I²R resistive winding heat, and onboard NPU compute.",
+    "wear_fraction": "Inverse of certified B10 design life (15,000–30,000 operating hours).",
+    "embodied_hardware": "Robot total mass divided by rated operating lifetime hours.",
+    "semiconductor_silicon": "Total silicon die area in edge SoCs, MCUs, and drivers amortized per hour.",
+    "refined_materials": "Upstream feedstock required including machining kerf and casting yields.",
+    "lithosphere_ore": "Geological grade concentration factors across bastnäsite, iron ore, and spodumene."
+  }
+}

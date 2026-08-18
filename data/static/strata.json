@@ -1,0 +1,164 @@
+[
+  {
+    "n": 1,
+    "t": "Lithosphere",
+    "c": "#6F4E3C",
+    "a": "Before there is a joint there is a hole in the ground. Iron, copper, aluminium, lithium and the rare earths that make a motor small enough to fit inside an arm — and at the refined end, the last of those come from effectively one country."
+  },
+  {
+    "n": 2,
+    "t": "Feedstock",
+    "c": "#855E42",
+    "a": "Purification and alloying. Sintered neodymium–iron–boron doped with dysprosium so it survives a hot motor, cathode powder, bearing steel held to one part in ten thousand, and the grease that decides how long a gearbox lives."
+  },
+  {
+    "n": 3,
+    "t": "Stock",
+    "c": "#9C7149",
+    "a": "Metal in the shapes you can buy it in — billet, plate, extrusion, casting, carbon prepreg, powder for the bed. Everything above this line is subtraction, fusion or forming."
+  },
+  {
+    "n": 4,
+    "t": "Fabrication",
+    "c": "#93887A",
+    "a": "Tolerance is bought, not designed. Grinding, gear hobbing, hard turning, sintering and additive: a robot's repeatability is set by the machines that made its parts, and those machines come from about a dozen firms."
+  },
+  {
+    "n": 5,
+    "t": "Bearings & guides",
+    "c": "#7D8B92",
+    "a": "Something has to hold an axis still while it turns. Crossed-roller bearings, linear rails, ball screws and thin-section rings — the least glamorous parts in the stack, and among the most concentrated."
+  },
+  {
+    "n": 6,
+    "t": "Transmission",
+    "c": "#5E86AC",
+    "a": "This is robotics' deepest moat. A strain-wave gear puts a hundred-to-one reduction and near-zero backlash inside a pancake the width of two fingers, and the world has been buying almost all of them from two Japanese firms."
+  },
+  {
+    "n": 7,
+    "t": "Motor",
+    "c": "#4E86C4",
+    "a": "Torque per kilogram is the whole game. Brushless permanent-magnet machines, built frameless so the joint can be assembled around them, and a magnet whose behaviour at 120 °C decides how hard the arm can push."
+  },
+  {
+    "n": 8,
+    "t": "Actuation",
+    "c": "#4184D8",
+    "a": "The joint as a product: motor, gearbox, encoder, brake, driver and thermal path sold as one part. This is where most of a modern robot's cost sits, which is why the actuator rather than the algorithm sets the price."
+  },
+  {
+    "n": 9,
+    "t": "Proprioception",
+    "c": "#3D96DE",
+    "a": "Knowing where your own body is turns out to be harder than seeing the room. Encoders, resolvers, inertial measurement, joint torque and current sensing — the difference between a machine that can push and one that can only move."
+  },
+  {
+    "n": 10,
+    "t": "Exteroception",
+    "c": "#3AA9DC",
+    "a": "Cameras, depth, LiDAR, radar, event sensors and skin. The cost curve here bent roughly a decade after the algorithms were ready, which is most of the reason perception arrived when it did rather than when it could have."
+  },
+  {
+    "n": 11,
+    "t": "Compute",
+    "c": "#34BCD2",
+    "a": "Inference that has to finish. A robot's compute budget is bounded by what a battery can carry and what a control loop can wait for — a different problem from the one a data centre solves, and solved by different parts."
+  },
+  {
+    "n": 12,
+    "t": "Power",
+    "c": "#35CFB6",
+    "a": "The robot carries its own grid. Cells, pack, battery management, DC bus and power stage — and an energy budget in which the actuators, not the compute, are the load."
+  },
+  {
+    "n": 13,
+    "t": "Chassis & end-effector",
+    "c": "#45D796",
+    "a": "Links, housings, cable routing, ingress protection, and the hand at the end of it. The arm is close to commoditised; what it holds is not, and gripper design is where most integration effort actually goes."
+  },
+  {
+    "n": 14,
+    "t": "Assembly",
+    "c": "#63D577",
+    "a": "Who actually builds robots. Contract manufacture, harnessing, calibration rigs and the burn-in that decides whether the machine you receive matches the datasheet you bought."
+  },
+  {
+    "n": 15,
+    "t": "Firmware & real-time",
+    "c": "#8ACE5F",
+    "a": "Loops that must close. Current control at tens of kilohertz, EtherCAT and CAN on the wire, a real-time kernel underneath, and a safety-rated path that has to keep working when everything else has stopped."
+  },
+  {
+    "n": 16,
+    "t": "Middleware",
+    "c": "#ADC751",
+    "a": "The plumbing between a policy and a joint. ROS 2 and DDS, drivers, transforms, logging and digital twins — unglamorous, near-universal, and the reason a research demonstration and a product are different objects."
+  },
+  {
+    "n": 17,
+    "t": "Control",
+    "c": "#CBBC48",
+    "a": "Kinematics, dynamics and the arithmetic of contact. Model-predictive control, whole-body control, impedance and admittance — sixty years of theory that a learned policy sits on top of rather than replaces."
+  },
+  {
+    "n": 18,
+    "t": "Data",
+    "c": "#DFA841",
+    "a": "Robotics has no internet to crawl. Every hour of manipulation data is bought — teleoperated, demonstrated, or harvested from a deployed fleet — and the cost of that hour is the most important number in the field's economics."
+  },
+  {
+    "n": 19,
+    "t": "Simulation",
+    "c": "#E58F42",
+    "a": "What you build when you cannot buy the data. Physics engines, rendering, domain randomisation and generated scenes — with a reality gap that is narrow for locomotion and stubbornly wide for contact."
+  },
+  {
+    "n": 20,
+    "t": "Policy",
+    "c": "#E3714E",
+    "a": "The model that turns pixels and proprioception into torque. Vision-language-action models, diffusion policies, reinforcement and imitation learning — the layer that made this a live field again after twenty flat years."
+  },
+  {
+    "n": 21,
+    "t": "Assay",
+    "c": "#DC5A66",
+    "a": "You cannot ship what you cannot certify. Benchmarks, reliability testing, mean time between failures, and a statutory safety case — which for anything sharing a floor with a person is a longer pole than autonomy."
+  },
+  {
+    "n": 22,
+    "t": "Autonomy",
+    "c": "#CE5288",
+    "a": "What happens when it goes wrong. Task planning, recovery behaviours, teleoperation fallback and the intervention rate — the number that decides whether a deployment has a business model."
+  },
+  {
+    "n": 23,
+    "t": "Fleet",
+    "c": "#B45AAE",
+    "a": "One robot is a demonstration. The interesting object is four hundred of them running unattended across nine sites, which is an operations problem wearing a robotics costume."
+  },
+  {
+    "n": 24,
+    "t": "Work",
+    "c": "#9166C9",
+    "a": "Where torque meets a job to be done. Picking, palletising, welding, assembly, inspection, transport, cleaning, harvest, surgery, last mile — measured against a wage, an hour and a defect rate, not against a benchmark."
+  },
+  {
+    "n": 25,
+    "t": "Interface",
+    "c": "#7C7FD4",
+    "a": "How a person tells a machine what to do, and stays safe while it does it. Teach pendants, lead-through, natural language, no-code, light curtains, and speed-and-separation monitoring."
+  },
+  {
+    "n": 26,
+    "t": "Capital & control",
+    "c": "#93A6BE",
+    "a": "The money and the rules. Robots-as-a-service rather than capex, subsidy regimes that rewrite themselves annually, export controls now reaching into actuators and magnets, and a liability question nobody has answered."
+  },
+  {
+    "n": 27,
+    "t": "Return & residue",
+    "c": "#C4CEDD",
+    "a": "Payback period, utilisation, the labour that moved rather than vanished — and what is left behind: magnets almost nobody recycles, packs that must be, and machines worth more refurbished than scrapped."
+  }
+]

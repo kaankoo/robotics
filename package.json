@@ -1,0 +1,21 @@
+{
+  "name": "ore-to-action",
+  "version": "1.0.0",
+  "private": true,
+  "description": "An interactive cross-section of the physical-intelligence stack — 27 strata, 150 stations, 815 organisations, from rare-earth ore to autonomous physical work.",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "check": "node scripts/check-data.mjs",
+    "smoke": "node --experimental-require-module scripts/smoke.mjs",
+    "parity": "node scripts/parity-engine.mjs",
+    "peek": "node scripts/peek.mjs",
+    "test": "npm run check && npm run smoke && npm run parity"
+  },
+  "devDependencies": {
+    "jsdom": "^30.0.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
