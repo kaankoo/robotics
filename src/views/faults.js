@@ -1,5 +1,9 @@
 /* ============================================================
-   FAULTS — counterfactual shocks and downstream reach.
+   FAULTS — the stack under stress.
+
+   Remove a station, walk the dependency graph downstream, and draw what
+   is reachable. The walk is `coneOfAll` from src/lib/graph.js, which is
+   the same function the Web lights its supply cones with.
    ============================================================ */
 
 import { app } from "../core/app.js";
@@ -8,12 +12,21 @@ import { coneOfAll } from "../lib/graph.js";
 const GUTTER = 208;
 const PAD_R = 20;
 const ROW = 21;
+const CELL = 13;
 const HEAD = 26;
 
-let D = null, svg = null;
-let faults = [];
-let current = null;
-let W = 1200, chartW = 960;
+const TIER_FILL = {
+  removed: "var(--qz)",
+  dead: "var(--mag)",
+  reroute: "var(--brs)"
+};
+
+let D = null, faults = [], svg = null;
+let current = null, W = 1200, chartW = 960;
+
+const esc = s => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+/* ---------- the arithmetic ---------- */
 
 export function exposure(f, dn = app.DN) {
   const reach = coneOfAll(f.removes, dn);
@@ -47,107 +60,123 @@ export function stats(data = D, dn = app.DN) {
   return { rows, widest, slowest, total: app.S.length };
 }
 
-function chip(id) {
-  const s = app.byId[id];
-  if (!s) return `<span>${esc(id)}</span>`;
-  return `<button class="cas__st" data-station="${id}" style="--c:${app.col(s.L)}">
-    <b>${app.pad(s.L)}</b>${esc(s.n)}</button>`;
-}
+/* ---------- painting ---------- */
 
 function paint() {
   if (!svg || !current) return;
-  const f = current;
-  const ex = exposure(f);
+  const f = current, ex = exposure(f);
   const H = HEAD + app.L.length * ROW + 12;
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("height", H);
 
-  let out = `<g class="flt__matrix">`;
-  app.L.forEach((l, idx) => {
-    const y = HEAD + idx * ROW;
-    const stations = app.S.filter(s => s.L === l.n);
-    const inReach = stations.filter(s => ex.reach.has(s.i)).length;
+  let out = "";
+  /* Rock at the bottom, as on the Descent and the Web. This view is a
+     cross-section, not a list, and a shock in the lithosphere has to be
+     seen climbing. */
+  const rows = app.L.slice().reverse();
+  rows.forEach((l, i) => {
+    const y = HEAD + i * ROW;
+    const st = app.byL[l.n] || [];
+    const hit = st.filter(s => ex.reach.has(s.i) || f.removes.includes(s.i)).length;
+    const w = chartW / Math.max(1, st.length);
 
-    out += `<text x="190" y="${y + 13}" text-anchor="end" font-size="10.5" fill="var(--ash)" font-family="var(--mono)">${app.pad(l.n)} ${esc(l.t)}</text>`;
-    out += `<text x="${W - 10}" y="${y + 13}" text-anchor="end" font-size="10" fill="var(--ash)" font-family="var(--mono)">${inReach ? `${inReach}/${stations.length}` : "—"}</text>`;
+    out += `<text class="flt__l" x="${GUTTER - 44}" y="${y + CELL - 2}" text-anchor="end">${esc(l.t)}</text>
+            <text class="flt__n" x="${GUTTER - 12}" y="${y + CELL - 2}" text-anchor="end"
+              fill="${hit ? l.c : "#39456B"}">${hit}/${st.length}</text>`;
 
-    const cellW = Math.min(22, Math.max(9, (chartW - 60) / Math.max(1, stations.length)));
-    stations.forEach((s, j) => {
-      const x = GUTTER + j * (cellW + 3);
+    st.forEach((s, k) => {
       const tier = tierOf(s.i, f, ex);
-      let col = "var(--line2)";
-      let op = 0.25;
-
-      if (tier === "removed") {
-        col = "#ffffff";
-        op = 1;
-      } else if (tier === "dead") {
-        col = "var(--mag)";
-        op = 0.9;
-      } else if (tier === "reroute") {
-        col = "var(--brs)";
-        op = 0.85;
-      } else if (tier === "reach") {
-        col = l.c;
-        op = 0.55;
-      }
-
-      out += `<rect class="flt__c flt__c--${tier}" data-station="${s.i}" x="${x}" y="${y}" width="${cellW}" height="${ROW - 5}" rx="2" fill="${col}" fill-opacity="${op}">
-        <title>${esc(s.n)} (${app.pad(s.L)})</title>
-      </rect>`;
+      const clear = tier === "clear";
+      const fill = TIER_FILL[tier] || l.c;
+      /* untouched stations keep their outline so the shape of the stack
+         stays legible, but carry no fill — otherwise a row of unaffected
+         cells reads as a row of affected ones */
+      const paintStyle = clear
+        ? `fill="none" stroke="${l.c}" stroke-opacity=".22" stroke-width="1"`
+        : `fill="${fill}" fill-opacity="${tier === "reach" ? 0.42 : 0.92}"`;
+      out += `<rect class="flt__c flt__c--${tier}" data-id="${s.i}"
+                x="${(GUTTER + k * w).toFixed(1)}" y="${y}"
+                width="${Math.max(2, w - 2).toFixed(1)}" height="${CELL}"
+                rx="2" style="cursor:pointer"
+                ${paintStyle}><title>${esc(s.n)} — ${
+                  tier === "removed" ? "removed" : tier === "dead" ? "dead-end" :
+                  tier === "reroute" ? "reroutes" : tier === "reach" ? "downstream" : "not downstream"
+                }</title></rect>`;
     });
   });
-  out += `</g>`;
-
   svg.innerHTML = out;
-  svg.querySelectorAll(".flt__c").forEach(r =>
-    r.addEventListener("click", () => app.openStation(r.dataset.station)));
+  svg.querySelectorAll(".flt__c").forEach(c =>
+    c.addEventListener("click", () => app.openStation(c.dataset.id)));
+
+  const countEl = document.getElementById("fltCount");
+  if (countEl) {
+    countEl.innerHTML =
+      `<b>${ex.n}</b> of ${app.S.length} stations downstream, across <b>${ex.strata}</b> strata ·
+       <em class="flt__k flt__k--reroute">${ex.reroute.size} reroutes</em> · 
+       <em class="flt__k flt__k--dead">${ex.dead.size} dead-ends</em> · 
+       <em class="flt__k flt__k--reach">${ex.unclassified} unclassified</em>`;
+  }
+}
+
+/* ---------- the panel ---------- */
+
+function chip(id) {
+  const s = app.byId[id];
+  if (!s) return `<span>${esc(id)}</span>`;
+  return `<button class="cas__st" data-station="${id}" style="--c:${app.col(s.L)}"><b>${app.pad(s.L)}</b>${esc(s.n)}</button>`;
+}
+
+function leadBar(years, max = 12) {
+  const pct = Math.min(100, (years / max) * 100);
+  return `<span class="flt__lead"><i style="width:${pct.toFixed(0)}%"></i><b>${
+    years === 0 ? "already exists" : `${years} yr${years === 1 ? "" : "s"}`}</b></span>`;
 }
 
 function detail(f) {
   current = f;
   const ex = exposure(f);
+  const maxLead = Math.max(12, f.leadTimeYears || 3, ...(f.reroutes || []).map(r => r.leadTimeYears || 0));
 
-  const countEl = document.getElementById("fltCount");
-  if (countEl) {
-    countEl.innerHTML = `<b>${ex.n}</b> of ${app.S.length} stations downstream · 
-      <i>${ex.reroute.size} reroutes</i> · 
-      <i>${ex.dead.size} dead-ends</i> · 
-      <i>${ex.unclassified} unclassified</i>`;
-  }
+  const cut = app.byId[f.removes[0]];
+  if (cut) app.depth("flt", cut.L);
 
-  const host = document.getElementById("fltPanel");
-  if (!host) return;
+  const panelHost = document.getElementById("fltPanel");
+  if (!panelHost) return;
 
-  host.innerHTML = `
-    <div class="atl__pk">
-      <span>Shock scenario</span>
-      <b class="atl__prec">${f.horizon || "12–36 months"} lead time</b>
+  panelHost.innerHTML = `
+    <div class="flt__pk">
+      <span>Exposure map</span>
+      <b class="flt__hl">${f.leadTimeYears || 3} year${(f.leadTimeYears || 3) === 1 ? "" : "s"} to a substitute at volume</b>
+      ${f.precedent ? `<button class="flt__prec" data-lag="${f.precedent}">precedent on the Lag chart →</button>` : ""}
     </div>
     <h3 class="atl__pn">${esc(f.title)}</h3>
-    <p class="atl__ps">${esc(f.sub)}</p>
+    <p class="atl__ps">removing ${f.removes.map(id => esc(app.byId[id] ? app.byId[id].n : id)).join(" · ")}</p>
     <p class="atl__pb">${esc(f.essay || f.note || "")}</p>
-
-    <h4 class="flt__h flt__h--rem">Cut links <span>${f.removes.length} removed</span></h4>
-    <div class="flt__list">${f.removes.map(chip).join(" ")}</div>
+    ${f.granularity ? `<p class="flt__gran"><b>What this actually removes</b> ${esc(f.granularity)}</p>` : ""}
 
     ${(f.reroutes || []).length ? `
-      <h4 class="flt__h flt__h--rr">Reroutes <span>${f.reroutes.length}</span></h4>
+      <h4 class="flt__h flt__h--reroute">Reroutes <span>${f.reroutes.length} · declared, not derived</span></h4>
       <div class="flt__list">${f.reroutes.map(r => `
         <div class="flt__item">
-          <div class="flt__ihead">${chip(r.station)} <span class="flt__lead">${r.leadYears || 2} yr lead time</span></div>
-          <p>${esc(r.route)}</p>
-          ${r.lag ? `<button class="grain__r" data-lag="${r.lag}">See precedent on the Lag chart →</button>` : ""}
+          <div class="flt__ihead">${chip(r.station)}${leadBar(r.leadTimeYears || 2, maxLead)}</div>
+          <p>${esc(r.how || r.route || "")}</p>
+          ${r.timeline || r.lag ? `<button class="flt__prec" data-lag="${r.timeline || r.lag}">it happened before →</button>` : ""}
+          ${r.source ? `<p class="cas__cite">${r.source.url
+            ? `<a href="${r.source.url}" target="_blank" rel="noopener">${esc(r.source.who)} — ${esc(r.source.what || "")} ↗</a>`
+            : `${esc(r.source.who)} — ${esc(r.source.what || "")}`}</p>` : ""}
         </div>`).join("")}</div>` : ""}
 
     ${(f.deadEnds || []).length ? `
-      <h4 class="flt__h flt__h--dead">Dead-ends <span>${f.deadEnds.length}</span></h4>
+      <h4 class="flt__h flt__h--dead">Dead-ends <span>${f.deadEnds.length} · declared, not derived</span></h4>
       <div class="flt__list">${f.deadEnds.map(d => `
         <div class="flt__item flt__item--dead">
           <div class="flt__ihead">${chip(d.station)}</div>
-          <p>${esc(d.why)}</p>
-        </div>`).join("")}</div>` : ""}
+          <p>${esc(d.why || "")}</p>
+        </div>`).join("")}</div>` : `
+      <h4 class="flt__h flt__h--none">No dead-ends declared <span>everything downstream has a route, however slow</span></h4>`}
 
-    <p class="flt__unc">${ex.unclassified} of the ${ex.n} downstream stations are <b>not classified either way</b>. That is the honest boundary of what this graph model claims.</p>
+    <p class="flt__unc">${ex.unclassified} of the ${ex.n} stations downstream are <b>not classified either way</b>.
+      That is not an oversight — it is the honest size of what this reading does not claim to know.</p>
 
     ${f.source ? `<p class="cas__cite">${f.source.url
       ? `<a href="${f.source.url}" target="_blank" rel="noopener">${esc(f.source.who)} — ${esc(f.source.what || "")} ↗</a>`
@@ -160,7 +189,6 @@ function detail(f) {
 
   document.querySelectorAll("#fltPicks button").forEach(b =>
     b.setAttribute("aria-pressed", String(b.dataset.fault === f.id)));
-
   paint();
 }
 
@@ -171,25 +199,16 @@ function goTo(id) {
 
 function claim() {
   const s = stats();
-  const host = document.getElementById("fltClaim");
-  if (!host) return;
-  host.innerHTML = `
+  const claimHost = document.getElementById("fltClaim");
+  if (!claimHost) return;
+  claimHost.innerHTML = `
     <button id="fltClaimBtn" class="atl__claimb">
       Reach is not damage. The widest blast radius here — <b>${s.widest.n}</b> of ${s.total} stations —
-      routes around itself in <b>${s.widest.lead}</b> years. The slowest takes <b>${s.slowest.lead} years</b> and reaches <b>${s.slowest.n}</b>.
+      routes around itself in <b>${s.widest.lead}</b> years.
+      The one that takes <b>${s.slowest.lead} years</b> reaches <b>${s.slowest.n}</b>.
     </button>`;
   document.getElementById("fltClaimBtn")?.addEventListener("click", () => goTo(s.slowest.id));
 }
-
-function size() {
-  if (!svg) return;
-  const r = svg.getBoundingClientRect();
-  W = Math.max(720, r.width || 1200);
-  chartW = W - GUTTER - PAD_R;
-  if (current) paint();
-}
-
-const esc = s => (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
 export async function initFaults() {
   const r = await fetch(new URL("../../data/static/counterfactuals.json", import.meta.url));
@@ -210,11 +229,12 @@ export async function initFaults() {
 
   const legendHost = document.getElementById("fltLegend");
   if (legendHost) {
-    legendHost.innerHTML = `
-      <span><i class="flt__sw" style="background:#ffffff"></i>Removed link</span>
-      <span><i class="flt__sw" style="background:var(--brs)"></i>Reroutes</span>
-      <span><i class="flt__sw" style="background:var(--mag)"></i>Dead-end</span>
-      <span><i class="flt__sw" style="background:var(--ash)"></i>Downstream reach</span>`;
+    legendHost.innerHTML = (D.meta?.tiers || [
+      { id: "removed", label: "Removed" },
+      { id: "reroute", label: "Reroutes" },
+      { id: "dead", label: "Dead-ends" },
+      { id: "reach", label: "Downstream" }
+    ]).map(t => `<span title="${esc(t.note || "")}"><i class="flt__sw flt__sw--${t.id}"></i>${esc(t.label)}</span>`).join("");
   }
 
   addEventListener("resize", () => {
@@ -227,4 +247,12 @@ export async function initFaults() {
   claim();
   size();
   if (faults[0]) detail(faults[0]);
+}
+
+function size() {
+  if (!svg) return;
+  const r = svg.getBoundingClientRect();
+  W = Math.max(720, r.width || 1200);
+  chartW = W - GUTTER - PAD_R;
+  if (current) paint();
 }
