@@ -1,5 +1,5 @@
 /* Headless smoke test — boots the real Ore to Action app in jsdom
-   against the static corpus and asserts the rendered DOM. */
+   against the static corpus and asserts the rendered DOM and inter-view links. */
 
 import fs from "node:fs";
 import path from "node:path";
@@ -83,23 +83,35 @@ atLeast("table rows rendered", D.querySelectorAll("#tb tr").length, 100);
 
 /* ruler */
 atLeast("ruler objects rendered", D.querySelectorAll(".rul__obj").length, 3);
+is("ruler fit handler registered", typeof app.rulerFit, "function");
+is("ruler goTo handler registered", typeof app.rulerGoTo, "function");
 
 /* atlas */
 atLeast("atlas site markers rendered", D.querySelectorAll(".atl__m").length, 20);
+atLeast("atlas layer chips rendered", D.querySelectorAll("#atlLayers button").length, 3);
+is("atlas fit handler registered", typeof app.atlasFit, "function");
+is("atlas goTo handler registered", typeof app.atlasGoTo, "function");
 
 /* timeline */
 atLeast("timeline capability rows rendered", D.querySelectorAll(".tml__r").length, 15);
+atLeast("timeline layer chips rendered", D.querySelectorAll("#tmlLayers button").length, 3);
+is("timeline fit handler registered", typeof app.lagFit, "function");
+is("timeline goTo handler registered", typeof app.lagGoTo, "function");
 
 /* faults */
 atLeast("fault scenario buttons rendered", D.querySelectorAll("#fltPicks button").length, 5);
+is("faults fit handler registered", typeof app.faultsFit, "function");
+is("faults goTo handler registered", typeof app.faultsGoTo, "function");
 
 /* cascade */
 atLeast("cascade chain rows rendered", D.querySelectorAll(".cas__row").length, 8);
 atLeast("cascade branches rendered", D.querySelectorAll(".cas__br").length, 3);
 atLeast("cascade key findings rendered", D.querySelectorAll(".cas__fi").length, 3);
+atLeast("cascade source buttons rendered", D.querySelectorAll("#v-cas .cas__how").length, 5);
 
 /* method */
 is("method notes rendered", D.querySelectorAll("#mthGrain .grain").length, 9);
+is("method showNote handler registered", typeof app.showNote, "function");
 
 /* sheet flyout test */
 app.openStation("strainwave");

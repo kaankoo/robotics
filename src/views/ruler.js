@@ -61,6 +61,13 @@ function glide(to) {
 
 function jump(to) { endSweep(); if (raf) { cancelAnimationFrame(raf); raf = null; } glide(to); }
 
+function focus(id) {
+  const o = objects.find(x => x.id === id);
+  if (!o) return;
+  jump(o.lg);
+  detail(o);
+}
+
 function lane(o, px) {
   const mid = (H - 60) / 2;
   const band = (H - 96) * SPREAD;
@@ -81,6 +88,7 @@ export function place(o, zNow = z) {
 }
 
 function paint() {
+  /* --- axis --- */
   let ax = "";
   const from = Math.ceil(z - W / 2 / PX_DECADE), to = Math.floor(z + W / 2 / PX_DECADE);
   for (let e = from; e <= to; e++) {
@@ -95,136 +103,215 @@ function paint() {
   ax += `<path d="M${W / 2} ${H - 44}l5 9h-10z" fill="var(--pls)"/>`;
   gAxis.innerHTML = ax;
 
+  /* --- objects with collision avoidance --- */
   let out = "";
   let focal = null, best = Infinity;
 
-  objects.forEach(o => {
+  const taken = [];
+  const free = (x0, x1, y) => !taken.some(q => x0 < q.x1 && x1 > q.x0 && Math.abs(q.y - y) < 15);
+  const claim = (x0, x1, y) => { taken.push({ x0, x1, y }); return y; };
+
+  for (const o of objects) {
     const p = place(o);
-    if (!p.visible || p.op <= 0) return;
+    if (!p.visible || p.op <= 0) continue;
     const d = Math.abs(p.rel);
     if (d < best) { best = d; focal = o; }
 
-    const y = lane(o, p.px);
     const s = p.px / 100;
-    const t = `translate(${p.x.toFixed(1)},${y.toFixed(1)}) scale(${s.toFixed(4)}) translate(-50,-50)`;
-    const glyph = drawGlyph(o.glyph, o.color || "var(--fg)");
+    const cy = lane(o, p.px);
 
-    out += `<g class="rul__obj" data-id="${o.id}" style="opacity:${p.op.toFixed(3)}">
-      <g transform="${t}">${glyph}</g>
-      <text class="rul__lbl" x="${p.x.toFixed(1)}" y="${(y + p.px / 2 + 16).toFixed(1)}" text-anchor="middle">${o.name}</text>
-      <text class="rul__sub" x="${p.x.toFixed(1)}" y="${(y + p.px / 2 + 28).toFixed(1)}" text-anchor="middle">${metres(o.size)}</text>
-    </g>`;
-  });
+    out += `<g class="rul__o rul__obj" data-id="${o.id}" opacity="${p.op.toFixed(3)}"
+              transform="translate(${x2(p.x)},${cy})">
+              <g transform="translate(${-p.px / 2},${-p.px / 2}) scale(${s})">${o.svg}</g>`;
+
+    const half = Math.max(p.px, 6) / 2;
+    const named = p.px > 26;
+    if ((named || p.px > 5) && p.x > 24 && p.x < W - 24) {
+      const w = (named ? o.name.length * 6.6 : metres(o.size).length * 6) / 2 + 6;
+      const x0 = p.x - w, x1 = p.x + w;
+      const rungs = named
+        ? [-half - 15, half + 27, -half - 39, half + 51, -half + 26, half - 14]
+        : [-half - 6, half + 12, -half - 24, half + 30];
+      const top = 14, floor = H - 50;
+      let y = rungs.find(r => cy + r > top && cy + r < floor && free(x0, x1, cy + r));
+      if (y === undefined) y = Math.min(floor - cy, Math.max(top - cy, rungs[0]));
+      claim(x0, x1, cy + y);
+      const under = y > 0;
+
+      out += named
+        ? (under
+          ? `<text class="rul__m" x="0" y="${y - 13}" text-anchor="middle">${metres(o.size)}</text>
+             <text class="rul__n" x="0" y="${y}" text-anchor="middle">${esc(o.name)}</text>`
+          : `<text class="rul__n" x="0" y="${y}" text-anchor="middle">${esc(o.name)}</text>
+             <text class="rul__m" x="0" y="${y + 12}" text-anchor="middle">${metres(o.size)}</text>`)
+        : `<text class="rul__m" x="0" y="${y}" text-anchor="middle">${metres(o.size)}</text>`;
+    }
+    out += `</g>`;
+  }
 
   gWorld.innerHTML = out;
-  gWorld.querySelectorAll(".rul__obj").forEach(g => {
-    g.addEventListener("click", () => {
-      const o = objects.find(x => x.id === g.dataset.id);
-      if (o) { jump(o.lg); detail(o); }
-    });
-  });
+  gWorld.querySelectorAll(".rul__o").forEach(g =>
+    g.addEventListener("click", () => focus(g.dataset.id)));
 
   document.getElementById("rulScale").textContent = metres(Math.pow(10, z));
-  const range = document.getElementById("rulRange");
-  if (range) range.value = String(z);
-
-  if (focal && best < 0.3) detail(focal);
+  document.getElementById("rulRange").value = String(z);
+  if (focal) detail(focal);
 }
 
-function detail(o) {
-  const panel = document.getElementById("rulPanel");
-  if (!panel) return;
-  const s = o.station && app.byId[o.station];
-  panel.innerHTML = `
-    <div class="atl__pk">
-      <b class="atl__pno">${metres(o.size)}</b>
-      <span class="tag" style="--c:${s ? app.col(s.L) : "var(--fg)"}">${s ? `${app.pad(s.L)} ${s.n}` : "Physical Scale"}</span>
-      <span class="atl__prec atl__prec--${o.precision}">${o.precision}</span>
-    </div>
-    <h3 class="atl__pn">${o.name}</h3>
-    <p class="atl__ps">${o.detail}</p>
-    <p class="atl__pb">${o.note}</p>
-    ${s ? `<button class="btn btn--p" data-open="${s.i}" style="margin-top:14px">Open ${s.n} station →</button>` : ""}`;
+const x2 = v => Math.round(v * 100) / 100;
+const esc = s => (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
-  const ob = panel.querySelector("[data-open]");
-  if (ob) ob.addEventListener("click", () => app.openStation(ob.dataset.open));
+/* ---------- detail panel ---------- */
+
+let shown = null;
+function detail(o) {
+  if (shown === o.id) return;
+  shown = o.id;
+
+  const st = app.byId[o.station];
+  if (st) app.depth("rul", st.L);
+
+  const precision = {
+    exact: "defined physical quantity or standard",
+    typical: "representative production value",
+    approx: "order of magnitude"
+  };
+
+  document.getElementById("rulPanel").innerHTML = `
+    <div class="atl__pk">
+      <span>10<sup>${o.lg.toFixed(1)}</sup> m</span>
+      <b class="atl__prec atl__prec--${o.precision}" title="${esc(precision[o.precision] || "")}">${o.precision}</b>
+    </div>
+    <h3 class="atl__pn">${esc(o.name)}</h3>
+    <p class="atl__ps">${metres(o.size)}</p>
+    <p class="atl__pb">${esc(o.desc || o.why || "")}</p>
+    ${o.source ? `<p class="cas__cite">${o.source.url
+      ? `<a href="${o.source.url}" target="_blank" rel="noopener">${esc(o.source.who)} — ${esc(o.source.what || "")} ↗</a>`
+      : `${esc(o.source.who)} — ${esc(o.source.what || "")}`}</p>` : ""}
+    ${st ? `<div class="atl__pl"><button class="cas__st" data-station="${o.station}" style="--c:${app.col(st.L)}">
+      <b>${app.pad(st.L)}</b>${esc(st.n)}</button></div>` : ""}`;
+
+  const b = document.querySelector("#rulPanel [data-station]");
+  if (b) b.addEventListener("click", () => app.openStation(b.dataset.station));
+}
+
+function sweep() {
+  if (sweeping) { endSweep(); return; }
+  jump(D.meta.span[0]);
+  const btn = document.getElementById("rulPlay");
+  if (btn) btn.textContent = "Pause";
+  const start = performance.now();
+  const span = D.meta.span[1] - D.meta.span[0];
+  const dur = app.RM ? 2000 : 18000;
+
+  const frame = now => {
+    const t = Math.min(1, (now - start) / dur);
+    z = target = D.meta.span[0] + t * span;
+    paint();
+    if (t < 1) sweeping = requestAnimationFrame(frame);
+    else endSweep();
+  };
+  sweeping = requestAnimationFrame(frame);
 }
 
 function endSweep() {
-  if (sweeping) { clearInterval(sweeping); sweeping = null; }
-  const b = document.getElementById("rulPlay");
-  if (b) b.textContent = "Sweep lattice → Earth";
+  if (!sweeping) return;
+  cancelAnimationFrame(sweeping);
+  sweeping = null;
+  const btn = document.getElementById("rulPlay");
+  if (btn) btn.textContent = "Sweep lattice → Earth";
 }
 
-function startSweep() {
-  endSweep();
-  const span = D.meta.span;
-  let cur = span[0];
-  jump(cur);
-  const b = document.getElementById("rulPlay");
-  if (b) b.textContent = "Stop sweep";
-  sweeping = setInterval(() => {
-    cur += 0.05;
-    if (cur > span[1]) { endSweep(); return; }
-    glide(cur);
-  }, 35);
+function stops() {
+  const host = document.getElementById("rulStops");
+  if (!host) return;
+  host.innerHTML = (D.stops || []).map(s =>
+    `<button class="rul__stop" data-id="${s.id}"><b>${s.label}</b><span>${s.sub}</span></button>`).join("");
+
+  host.querySelectorAll(".rul__stop").forEach(b =>
+    b.addEventListener("click", () => focus(b.dataset.id)));
+}
+
+function size() {
+  if (!svg) return;
+  const r = svg.getBoundingClientRect();
+  W = Math.max(360, r.width || 1200);
+  H = Math.max(380, r.height || 560);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  shown = null;
+  paint();
 }
 
 export async function initRuler() {
-  svg = document.getElementById("rulSvg");
-  stage = svg.parentElement;
   const url = new URL("../../data/static/ruler.json", import.meta.url);
   const r = await fetch(url);
   if (!r.ok) throw new Error(`Could not load ruler.json (${r.status})`);
   D = await r.json();
 
-  const span = D.meta.span;
-  objects = D.objects.map((o, idx) => {
-    const lg = Math.log10(o.size);
-    const laneIdx = (idx % (LANES * 2 - 2));
-    const l = laneIdx < LANES ? laneIdx : (LANES * 2 - 2 - laneIdx);
-    return { ...o, lg, lane: l };
-  });
+  svg = document.getElementById("rulSvg");
+  stage = svg.closest(".rul__stage");
 
-  document.getElementById("rulPxDecade").textContent = String(PX_DECADE);
+  svg.innerHTML = `<g id="rulWorld"></g><g id="rulAxis"></g>`;
+  gWorld = document.getElementById("rulWorld");
+  gAxis = document.getElementById("rulAxis");
 
-  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  gWorld = document.createElementNS(NS, "g");
-  gAxis = document.createElementNS(NS, "g");
-  svg.appendChild(gWorld);
-  svg.appendChild(gAxis);
+  objects = (D.objects || []).map(o => ({
+    ...o,
+    lg: Math.log10(o.size),
+    svg: drawGlyph(o.glyph, o.color || "currentColor")
+  }));
+
+  stops();
 
   const range = document.getElementById("rulRange");
-  range.min = String(span[0]);
-  range.max = String(span[1]);
+  range.min = String(D.meta.span[0]);
+  range.max = String(D.meta.span[1]);
   range.step = "0.01";
   range.value = String(z);
+
   range.addEventListener("input", e => jump(+e.target.value));
 
-  document.getElementById("rulStops").innerHTML = D.meta.stops.map(s =>
-    `<button class="chip" data-z="${s.z}">${s.name}</button>`).join("");
-
-  document.querySelectorAll("#rulStops .chip").forEach(b =>
-    b.addEventListener("click", () => jump(+b.dataset.z)));
-
-  document.getElementById("rulPlay").addEventListener("click", () => {
-    if (sweeping) endSweep(); else startSweep();
-  });
-
-  svg.addEventListener("mousedown", e => {
-    dragging = { x: e.clientX, z: z };
-  });
-  addEventListener("mousemove", e => {
-    if (!dragging) return;
-    const dx = e.clientX - dragging.x;
-    jump(dragging.z - dx / PX_DECADE);
-  });
-  addEventListener("mouseup", () => { dragging = null; });
-
-  svg.addEventListener("wheel", e => {
+  stage.addEventListener("wheel", e => {
     e.preventDefault();
-    jump(z + (e.deltaY * WHEEL_PX) / PX_DECADE);
+    const d = (e.deltaX + e.deltaY) * (e.deltaMode === 1 ? 16 : 1);
+    jump(target + (d * WHEEL_PX) / PX_DECADE);
   }, { passive: false });
 
-  glide(z);
+  stage.addEventListener("pointerdown", e => {
+    if (e.target.closest(".rul__o")) return;
+    dragging = { x: e.clientX, z };
+    stage.setPointerCapture(e.pointerId);
+    stage.classList.add("drag");
+  });
+  stage.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    endSweep();
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    z = target = clamp(dragging.z - (e.clientX - dragging.x) / PX_DECADE);
+    paint();
+  });
+  const stopDrag = () => { dragging = null; stage.classList.remove("drag"); };
+  stage.addEventListener("pointerup", stopDrag);
+  stage.addEventListener("pointercancel", stopDrag);
+
+  const playBtn = document.getElementById("rulPlay");
+  if (playBtn) playBtn.addEventListener("click", sweep);
+
+  addEventListener("keydown", e => {
+    if (!document.getElementById("v-rul").classList.contains("on")) return;
+    if (e.target.tagName === "INPUT") return;
+    if (e.key === "ArrowRight") { jump(target + 0.5); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { jump(target - 0.5); e.preventDefault(); }
+  });
+
+  addEventListener("resize", () => {
+    if (document.getElementById("v-rul").classList.contains("on")) size();
+  });
+
+  const pxLabel = document.getElementById("rulPxDecade");
+  if (pxLabel) pxLabel.textContent = PX_DECADE;
+
+  app.rulerGoTo = focus;
+  app.rulerFit = size;
+  size();
 }

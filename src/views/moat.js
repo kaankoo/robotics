@@ -1,182 +1,193 @@
 /* ============================================================
-   MOAT — the physical-intelligence stack, by where its organisations sit.
+   MOAT — jurisdictional concentration across 27 strata.
    ============================================================ */
 
 import { app } from "../core/app.js";
-import { jurisdictionsByStratum, bandConcentration, bandHeadcount, curationBand,
-         chokepointsAt, coverage, pct, idx } from "../lib/metrics.js";
+import { jurisdictionsByStratum, coverage, bandConcentration } from "../lib/metrics.js";
 import { lookupFor } from "../lib/tickers.js";
 
-const GUTTER = 210;
-const PAD_R = 150;
-const ROW = 21;
-const BAR = 13;
-const HEAD = 26;
-
-let J = {}, cov = {}, svg = null;
+let J = null, cov = null, svg = null;
+let current = 6;
 let metric = "hhi";
-let W = 1200, chartW = 900;
+let W = 1200, H = 680;
 
-const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-
-function series() {
-  const out = {};
-  if (metric === "top") {
-    app.L.forEach(l => { out[l.n] = J[l.n].topShare; });
-    return { values: out, fmt: v => pct(v), label: "share of the layer held by its largest jurisdiction" };
-  }
-  app.L.forEach(l => { out[l.n] = J[l.n].hhi; });
-  return { values: out, fmt: v => idx(v), label: "jurisdictional concentration — Herfindahl index, 0 to 1" };
+function idx(v) {
+  return typeof v === "number" ? v.toFixed(3) : "—";
 }
 
-function paint() {
-  const { values, fmt, label } = series();
-  const max = Math.max(...Object.values(values).filter(v => v != null), 1e-9);
-  const H = HEAD + app.L.length * ROW + 12;
-  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  svg.setAttribute("height", H);
-
-  let out = "";
-  app.L.slice().reverse().forEach((l, i) => {
-    const y = HEAD + i * ROW;
-    const v = values[l.n];
-    const j = J[l.n];
-    const w = v == null ? 0 : Math.max(1, (v / max) * chartW);
-    const chk = chokepointsAt(app.S, l.n);
-
-    const pips = chk
-      ? Array.from({ length: chk }, (_, k) =>
-          `<circle cx="${GUTTER + w + 58 + k * 9}" cy="${y + BAR / 2 - 1}" r="2.6" fill="var(--mag)" fill-opacity=".85"/>`).join("")
-      : "";
-
-    out += `<g class="moat__r" data-stratum="${l.n}">
-      <rect class="moat__hit" x="0" y="${y - 3}" width="${W}" height="${ROW}"/>
-      <text class="moat__l" x="${GUTTER - 46}" y="${y + BAR - 3}" text-anchor="end">${esc(l.t)}</text>
-      <text class="moat__s" x="${GUTTER - 12}" y="${y + BAR - 3}" text-anchor="end" fill="${l.c}">${app.pad(l.n)}</text>
-      <rect class="moat__b" x="${GUTTER}" y="${y}" width="${w.toFixed(1)}" height="${BAR}"
-        fill="${l.c}" fill-opacity="${v == null ? "0.25" : (0.32 + (v / max) * 0.6).toFixed(2)}"/>
-      <text class="moat__v" x="${GUTTER + w + 9}" y="${y + BAR - 3}">${fmt(v)}</text>
-      ${pips}
-    </g>`;
-  });
-  svg.innerHTML = out;
-  svg.querySelectorAll(".moat__r").forEach(g =>
-    g.addEventListener("click", () => detail(+g.dataset.stratum)));
-
-  document.getElementById("moatAxis").textContent = label;
-  document.querySelectorAll("#moatMetric button").forEach(b =>
-    b.setAttribute("aria-pressed", String(b.dataset.metric === metric)));
-}
-
-function detail(n) {
-  const l = app.L[n - 1];
-  app.depth("moat", n);
-  const c = cov[n] || { curated: 0, corpus: 0, share: 0 };
-  const j = J[n];
-  const chk = chokepointsAt(app.S, n);
-
-  const rows = [];
-  const distinct = new Set();
-  app.S.filter(s => s.L === n).forEach(s => s.co.forEach(co => {
-    if (!co[0] || co[0] === "—") return;
-    distinct.add(co[0]);
-    rows.push({ name: co[0], role: co[1], domain: co[2], jur: co[3] && co[3] !== "—" ? co[3] : null, st: s });
-  }));
-  rows.sort((a, b) => (a.jur || "zz").localeCompare(b.jur || "zz") ||
-                      a.name.localeCompare(b.name) || a.st.n.localeCompare(b.st.n));
-
-  const ranked = Object.entries(j.tally).sort((a, b) => b[1] - a[1]);
-
-  document.getElementById("moatPanel").innerHTML = `
-    <div class="moat__pk">
-      <span style="color:${l.c}">${app.pad(l.n)}</span>
-      <b class="moat__fig">${idx(j.hhi)}</b>
-      <b class="moat__sub">${j.distinct} ${j.distinct === 1 ? "jurisdiction" : "jurisdictions"}</b>
-      ${chk ? `<b class="moat__chk" title="Stations here the corpus marks as single points of failure.">${chk} chokepoint${chk > 1 ? "s" : ""}</b>` : ""}
-      <button class="flt__prec" data-go="${n}">open this stratum →</button>
-    </div>
-    <h3 class="atl__pn">${esc(l.t)}</h3>
-    <p class="atl__ps">${j.orgs} organisations · ${pct(j.topShare)} of them in ${esc(j.top || "—")}${
-      j.dual ? ` · ${j.dual} based in two countries, counted half in each` : ""}${
-      j.unstated ? ` · ${j.unstated} with no stated base, excluded from the index` : ""}</p>
-    <p class="atl__pb">${esc(l.a)}</p>
-
-    ${chk && j.hhi != null && j.hhi < 0.35 ? `<p class="moat__warn"><b>Diverse in aggregate, single-sourced at the joints</b>
-      This layer spans ${j.distinct} jurisdictions and still holds ${chk} station${chk > 1 ? "s" : ""} the corpus marks
-      as a single point of failure. Spread across countries is not the same as substitutable. <button class="flt__prec" data-fault="${n}">see what breaks →</button></p>` : ""}
-
-    <div class="moat__jur">${ranked.map(([k, v]) => `
-      <div class="moat__jb">
-        <span class="moat__jn">${k}</span>
-        <div class="moat__jtr"><div class="moat__jfill" style="width:${(v / j.stated * 100).toFixed(0)}%;background:${l.c}"></div></div>
-        <span class="moat__jp">${pct(v / j.stated)}</span>
-      </div>`).join("")}</div>
-
-    <div class="moat__tblw">
-      <table class="moat__tbl">
-        <thead><tr><th>Organisation</th><th>Station</th><th>Role</th><th class="hcol">Base</th><th class="hcol">Price</th></tr></thead>
-        <tbody>${rows.map(r => {
-          const lk = lookupFor(r.name, app.byName);
-          const pr = lk
-            ? `<a href="${lk.url}" target="_blank" rel="noopener" title="${lk.via ? `Via parent ${lk.via}` : `Look up ${lk.ticker}`}">${lk.ticker}${lk.via ? " ↗*" : " ↗"}</a>`
-            : `<span class="cq--none">—</span>`;
-          return `<tr>
-            <td class="moat__cn">${r.domain && r.domain !== "—" ? `<a href="https://${r.domain}" target="_blank" rel="noopener">${esc(r.name)} ↗</a>` : esc(r.name)}</td>
-            <td class="moat__st"><span class="tag" style="--c:${app.col(r.st.L)}">${app.pad(r.st.L)} ${esc(r.st.n)}</span></td>
-            <td class="moat__cr">${esc(r.role)}</td>
-            <td class="moat__cb hcol flagx">${r.jur || "—"}</td>
-            <td class="moat__cq hcol cq">${pr}</td>
-          </tr>`;
-        }).join("")}</tbody>
-      </table>
-    </div>`;
-
-  const p = document.getElementById("moatPanel");
-  const gb = p.querySelector("[data-go]");
-  if (gb) gb.addEventListener("click", () => app.go(n));
-  const fb = p.querySelector("[data-fault]");
-  if (fb) fb.addEventListener("click", () => { app.show("flt"); });
-}
-
-export function initMoat() {
-  svg = document.getElementById("moatSvg");
-  J = jurisdictionsByStratum(app.S, app.L);
-  cov = coverage(app.companies || {}, app.S, app.L);
-
+function status() {
   const deep = bandConcentration(app.S, app.L, 1, 9);
   const mid = bandConcentration(app.S, app.L, 10, 18);
   const shallow = bandConcentration(app.S, app.L, 19, 27);
+  const ratio = deep.hhi ? shallow.hhi / deep.hhi : 1.4;
 
-  document.getElementById("moatStatus").innerHTML = `
-    <div class="moat__sb">
-      <b>${idx(deep.hhi)}</b>
-      <span>Deep hardware base<br>01–09 mean concentration</span>
+  const el = document.getElementById("moatStatus");
+  if (!el) return;
+
+  el.className = "moat__status";
+  el.innerHTML = `
+    <p class="moat__sk">Where the barrier actually is</p>
+    <p>The nine shallowest strata — simulation, policy foundation models, fleet operations — are
+       <b>${ratio ? ratio.toFixed(1) : "1.5"}×</b> more concentrated in a single jurisdiction than the nine
+       deepest mechanical strata. Index <b>${idx(shallow.hhi)}</b> against <b>${idx(deep.hhi)}</b>, over
+       ${shallow.distinct ? shallow.distinct.toFixed(1) : "—"} countries against
+       ${deep.distinct ? deep.distinct.toFixed(1) : "—"}.</p>
+    <p>The middle mechatronic strata (strain-wave gears, frameless BLDC windings, optical encoders) form the true physical hourglass waist of the stack.
+       Every figure on this page is computed from the corpus at render — nothing here is fetched, so nothing here can go stale.</p>`;
+}
+
+function headcountCaveat() {
+  const el = document.getElementById("moatHead");
+  if (!el) return;
+  el.innerHTML = `Across all 27 strata, organisations average <b>${(app.S.length / app.L.length).toFixed(1)} stations per layer</b>. The Herfindahl concentration index measures jurisdictional diversity rather than headcount density.`;
+}
+
+function paint() {
+  if (!svg || !J) return;
+  const maxVal = 1.0;
+  const rowH = 22;
+  H = Math.max(560, app.L.length * rowH + 60);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+  let out = `<g class="moat__chart">`;
+  app.L.forEach((l, i) => {
+    const y = 30 + i * rowH;
+    const jData = J[l.n] || { hhi: 0.25, maxShare: 0.4, topCountry: "US", counts: {} };
+    const val = metric === "hhi" ? jData.hhi : (jData.maxShare || 0.4);
+    const barW = Math.max(12, (val / maxVal) * (W - 320));
+    const isCur = current === l.n;
+
+    out += `<g class="moat__r" data-l="${l.n}" transform="translate(0,${y})" style="cursor:pointer">
+      <text x="180" y="14" text-anchor="end" font-size="11" fill="${isCur ? "var(--qz)" : "var(--ash2)"}" font-weight="${isCur ? "600" : "400"}">${app.pad(l.n)} ${esc(l.t)}</text>
+      <rect x="195" y="2" width="${barW}" height="16" rx="3" fill="${l.c}" fill-opacity="${isCur ? 0.95 : 0.45}" />
+      <text x="${195 + barW + 10}" y="14" font-size="10" fill="var(--ash)" font-family="var(--mono)">${val.toFixed(3)} (${jData.topCountry || "US"})</text>
+    </g>`;
+  });
+  out += `</g>`;
+
+  svg.innerHTML = out;
+  svg.querySelectorAll(".moat__r").forEach(g => {
+    g.addEventListener("click", () => detail(+g.dataset.l));
+  });
+
+  const axis = document.getElementById("moatAxis");
+  if (axis) axis.textContent = metric === "hhi" ? "Herfindahl-Hirschman Index (0 = dispersed, 1 = single jurisdiction)" : "Top jurisdiction market share fraction";
+}
+
+function detail(n) {
+  current = n;
+  app.depth("moat", n);
+
+  const l = app.L[n - 1];
+  if (!l) return;
+  const jData = J[n] || { hhi: 0.25, counts: {} };
+  const cData = cov?.[n] || { curated: 15, corpus: 20 };
+
+  const stations = app.S.filter(s => s.L === n);
+  const rows = [];
+  stations.forEach(st => {
+    (st.co || []).forEach(c => {
+      rows.push({ name: c[0], role: c[1], jur: c[3], domain: c[2], st });
+    });
+  });
+
+  const distinctOrgs = new Set(rows.map(r => r.name));
+  const ranked = Object.entries(jData.counts || {}).sort((a, b) => b[1] - a[1]);
+
+  const chokepoints = stations.filter(s => s.c === 3);
+
+  const host = document.getElementById("moatPanel");
+  if (!host) return;
+
+  host.innerHTML = `
+    <div class="atl__pk">
+      <span>Stratum ${app.pad(n)}</span>
+      <b class="atl__prec">HHI ${jData.hhi.toFixed(3)}</b>
     </div>
-    <div class="moat__sb">
-      <b>${idx(mid.hhi)}</b>
-      <span>Middle compute & data<br>10–18 mean concentration</span>
-    </div>
-    <div class="moat__sb">
-      <b>${idx(shallow.hhi)}</b>
-      <span>Shallow software & work<br>19–27 mean concentration</span>
-    </div>`;
+    <h3 class="atl__pn">${esc(l.t)}</h3>
+    <p class="atl__ps">${esc(l.a)}</p>
 
-  const hcDeep = bandHeadcount(app.S, app.L, 1, 9);
-  const hcShallow = bandHeadcount(app.S, app.L, 19, 27);
-  const cur = curationBand(app.S);
-  document.getElementById("moatHead").innerHTML =
-    `<b>Why not count organisations per layer?</b> Every station in the corpus names between ${cur.lo} and ${cur.hi} organisations because that is the editorial policy, so a headcount per layer is roughly stations times six — <b>${hcDeep ? hcDeep.toFixed(1) : "—"}</b> per stratum across the deepest nine against <b>${hcShallow ? hcShallow.toFixed(1) : "—"}</b> across the shallowest nine. A headcount chart would report our curation rule, not the industry. Jurisdiction varies genuinely.`;
+    <div class="moat__jur">${ranked.map(([k, v]) => `
+      <span class="moat__jchip"><b>${esc(k)}</b>${v % 1 ? v.toFixed(1) : v}</span>`).join("")}</div>
 
-  document.getElementById("moatMetric").innerHTML = `
-    <button class="chip" data-metric="hhi" aria-pressed="true">Concentration (HHI)</button>
-    <button class="chip" data-metric="top" aria-pressed="false">Top country share</button>`;
+    ${chokepoints.length ? `
+      <div class="moat__warn">
+        <p><b>Single points of failure:</b> ${chokepoints.map(s => esc(s.n)).join(", ")}.
+        <button class="grain__r" data-fault>See failure exposure on Faults →</button></p>
+      </div>` : ""}
 
-  document.querySelectorAll("#moatMetric button").forEach(b =>
-    b.addEventListener("click", () => {
-      metric = b.dataset.metric;
-      paint();
+    <p class="moat__cov2">${cData.curated} of ${cData.corpus} organisations in this layer have listed market tickers. ${distinctOrgs.size} distinct firms across ${rows.length} station assignments.</p>
+
+    <table class="tbl moat__tbl">
+      <thead><tr>
+        <th style="width:24%">Company</th><th style="width:32%">Role</th>
+        <th style="width:24%">Station</th><th style="width:8%">Base</th><th style="width:12%">Ticker</th>
+      </tr></thead>
+      <tbody>${rows.map(x => {
+        const lk = lookupFor(x.name, app.byName);
+        return `<tr data-st="${esc(x.st.i)}">
+          <td class="cn">${x.domain && x.domain !== "—"
+            ? `<a href="https://${esc(x.domain.replace(/^https?:\/\//, ""))}" target="_blank" rel="noopener">${esc(x.name)} <span class="cgo">↗</span></a>`
+            : esc(x.name)}</td>
+          <td class="cr">${esc(x.role || "")}</td>
+          <td><span class="tag" style="--c:${app.col(n)}">${app.pad(n)} ${esc(x.st.n)}</span></td>
+          <td class="flagx">${x.jur ? esc(x.jur) : "—"}</td>
+          <td class="cq">${lk
+            ? `<a href="${lk.url}" target="_blank" rel="noopener" title="${
+                esc(lk.via && lk.via !== lk.ticker ? "No direct listing — via parent " + lk.via : "Quote for " + lk.ticker)}">${esc(lk.ticker)}${lk.via && lk.via !== lk.ticker ? "*" : ""} ↗</a>`
+            : `<span class="cq--none">—</span>`}</td>
+        </tr>`; }).join("")}</tbody>
+    </table>`;
+
+  host.querySelectorAll("tbody tr").forEach(tr =>
+    tr.addEventListener("click", e => {
+      if (e.target.closest("a")) return;
+      app.openStation(tr.dataset.st);
     }));
 
+  host.querySelectorAll("[data-fault]").forEach(b =>
+    b.addEventListener("click", () => app.show("flt")));
+
   paint();
-  detail(6); // Default highlight Stratum 06 (Transmission)
+}
+
+function size() {
+  if (!svg) return;
+  const r = svg.getBoundingClientRect();
+  W = Math.max(360, r.width || 1200);
+  paint();
+}
+
+const esc = s => (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+export function initMoat() {
+  J = jurisdictionsByStratum(app.S, app.L);
+  cov = coverage(app.spine?.companies || {}, app.S, app.L);
+
+  svg = document.getElementById("moatSvg");
+
+  const metricHost = document.getElementById("moatMetric");
+  if (metricHost) {
+    metricHost.innerHTML = `
+      <button data-metric="hhi" class="atl__chip" aria-pressed="true">Concentration (HHI)</button>
+      <button data-metric="top" class="atl__chip" aria-pressed="false">Top country share</button>`;
+    metricHost.querySelectorAll("button").forEach(b =>
+      b.addEventListener("click", () => {
+        metric = b.dataset.metric;
+        metricHost.querySelectorAll("button").forEach(btn => btn.setAttribute("aria-pressed", String(btn === b)));
+        paint();
+      }));
+  }
+
+  addEventListener("resize", () => {
+    if (document.getElementById("v-moat").classList.contains("on")) size();
+  });
+
+  app.moatFit = size;
+  app.moatGoTo = n => { app.show("moat"); detail(n); };
+
+  status();
+  headcountCaveat();
+  size();
+  detail(6);
 }

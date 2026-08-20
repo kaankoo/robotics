@@ -1,256 +1,245 @@
 /* ============================================================
-   LAG — the distance between working and shipping.
+   TIMELINE (LAG) — capabilities and the years they waited.
    ============================================================ */
 
 import { app } from "../core/app.js";
 
-const GUTTER = 216;
-const PAD_R = 26;
-const ROW = 15;
-const BAR = 7;
-const HEAD = 40;
-
 const REASON_COLOUR = {
-  unsolved: "var(--mag)", tooling: "var(--ind)", economics: "var(--cu)",
-  scale: "var(--pls)", demand: "var(--brs)"
+  science: "var(--pls)",
+  machine: "var(--brs)",
+  application: "var(--ok)",
+  compute: "var(--ind)",
+  market: "var(--mag)"
 };
 
-let D = null, events = [], svg = null;
-let W = 1200, chartW = 960;
-let year = 2026, playing = null, focused = null;
-let layers = { reason: false, long: false, sortLag: false };
+let D = null, svg = null;
+let events = [];
+let year = 2026;
+let playing = null;
+let focused = null;
+let W = 1200, H = 540;
 
-const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
-const lagOf = e => (e.shipped == null ? null : e.shipped - e.invented);
+const layers = { reason: false, long: false, sortLag: false };
 
-export function stats(data = D) {
-  const E = data.events, shipped = E.filter(e => e.shipped != null);
-  const med = a => {
-    const s = a.slice().sort((x, y) => x - y);
-    return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;
-  };
-  const band = (lo, hi) => {
-    const g = shipped.filter(e => e.stratum >= lo && e.stratum <= hi);
-    return { n: g.length, median: med(g.map(e => e.shipped - e.invented)) };
-  };
-  const long = shipped.filter(e => e.shipped - e.invented >= 15);
-  return {
-    total: E.length,
-    shipped: shipped.length,
-    open: E.length - shipped.length,
-    median: med(shipped.map(e => e.shipped - e.invented)),
-    deep: band(1, 9), middle: band(10, 18), shallow: band(19, 27),
-    long: long.length,
-    longUnsolved: long.filter(e => e.waitedFor === "unsolved").length
-  };
+function lagOf(e) {
+  if (e.shipped == null) return null;
+  return e.shipped - e.invented;
 }
 
-export function landedBy(y, data = D) {
-  const strata = {};
-  for (const e of data.events) {
-    const s = (strata[e.stratum] = strata[e.stratum] || { n: 0, in: 0 });
-    s.n++;
-    if (e.shipped != null && e.shipped <= y) s.in++;
+function landedBy(y) {
+  const byStratum = {};
+  let lit = 0;
+  for (let l = 1; l <= app.L.length; l++) {
+    const list = events.filter(e => e.stratum === l);
+    const inCount = list.filter(e => e.invented <= y).length;
+    if (inCount > 0) lit++;
+    byStratum[l] = { in: inCount, n: list.length || 1 };
   }
-  const lit = Object.values(strata).filter(s => s.in > 0).length;
-  return { strata, lit, of: Object.keys(strata).length };
-}
-
-const x = y => GUTTER + ((y - D.meta.span[0]) / (D.meta.span[1] - D.meta.span[0])) * chartW;
-
-function ordered() {
-  const list = events.slice();
-  if (layers.sortLag) {
-    return list.sort((a, b) => {
-      const la = lagOf(a), lb = lagOf(b);
-      if (la == null && lb == null) return a.invented - b.invented;
-      if (la == null) return -1;
-      if (lb == null) return 1;
-      return lb - la;
-    });
-  }
-  return list.sort((a, b) => a.stratum - b.stratum || a.invented - b.invented);
-}
-
-function colourOf(e) {
-  if (layers.reason) return REASON_COLOUR[e.waitedFor] || "var(--ash)";
-  return app.col(e.stratum);
-}
-
-function paint() {
-  const rows = ordered();
-  const H = HEAD + rows.length * ROW + 16;
-  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  svg.setAttribute("height", H);
-
-  let ax = "";
-  const [y0, y1] = D.meta.span;
-  for (let y = Math.ceil(y0 / 10) * 10; y <= y1; y += 10) {
-    ax += `<line class="tml__grid" x1="${x(y)}" y1="${HEAD - 12}" x2="${x(y)}" y2="${H - 10}"/>`;
-    ax += `<text class="tml__tick" x="${x(y)}" y="${HEAD - 18}" text-anchor="middle">${y}</text>`;
-  }
-  ax += `<line class="tml__now" x1="${x(D.meta.now)}" y1="${HEAD - 16}" x2="${x(D.meta.now)}" y2="${H - 10}"/>`;
-  ax += `<text class="tml__nowt" x="${x(D.meta.now) + 5}" y="${HEAD - 18}">now</text>`;
-  ax += `<line class="tml__head" x1="${x(year)}" y1="${HEAD - 16}" x2="${x(year)}" y2="${H - 10}"/>`;
-
-  let out = "";
-  rows.forEach((e, i) => {
-    const yTop = HEAD + i * ROW;
-    const cy = yTop + ROW / 2;
-    const c = colourOf(e);
-    const lag = lagOf(e);
-    const clamped = e.invented < y0;
-
-    const started = e.invented <= year;
-    const landed = e.shipped != null && e.shipped <= year;
-    const dim = layers.long && lag != null && lag < 15;
-
-    const x0 = Math.max(GUTTER, x(e.invented));
-    const xEnd = e.shipped == null ? x(D.meta.now) : x(e.shipped);
-    const xNow = Math.min(xEnd, x(year));
-
-    out += `<g class="tml__r${focused === e.id ? " on" : ""}" data-id="${e.id}"
-              opacity="${!started ? 0.13 : dim ? 0.22 : 1}">
-              <rect class="tml__hit" x="0" y="${yTop}" width="${W}" height="${ROW}"/>`;
-
-    out += `<text class="tml__l" x="${GUTTER - 12}" y="${cy + 3.5}" text-anchor="end">${esc(e.label)}</text>
-            <rect class="tml__pip" x="8" y="${cy - 4}" width="4" height="8" fill="${app.col(e.stratum)}"/>
-            <text class="tml__s" x="20" y="${cy + 3.5}">${app.pad(e.stratum)}</text>`;
-
-    if (started) {
-      out += `<rect class="tml__track" x="${x0}" y="${cy - BAR / 2}"
-                width="${Math.max(1, xEnd - x0)}" height="${BAR}" fill="${c}"/>`;
-      out += `<rect class="tml__fill" x="${x0}" y="${cy - BAR / 2}"
-                width="${Math.max(1, xNow - x0)}" height="${BAR}" fill="${c}"/>`;
-
-      if (clamped)
-        out += `<path class="tml__cap" d="M${x0} ${cy - BAR / 2 - 2}l-7 ${BAR / 2 + 2}l7 ${BAR / 2 + 2}z" fill="${c}"/>`;
-
-      if (e.shipped == null) {
-        out += `<path class="tml__open" d="M${xEnd} ${cy}h14m-4 -4l4 4l-4 4" stroke="${c}"/>`;
-      } else if (landed) {
-        out += `<rect class="tml__land" x="${xEnd - 1.5}" y="${cy - BAR / 2 - 3}" width="3" height="${BAR + 6}" fill="${c}"/>`;
-      }
-
-      if (lag != null && (landed || !layers.long))
-        out += `<text class="tml__y" x="${xEnd + 8}" y="${cy + 3.5}" fill="${c}">${lag}y</text>`;
-    }
-    out += `</g>`;
-  });
-
-  svg.innerHTML = ax + out;
-  svg.querySelectorAll(".tml__r").forEach(g =>
-    g.addEventListener("click", () => detail(g.dataset.id)));
-
-  strip();
+  return { strata: byStratum, lit, of: app.L.length };
 }
 
 function strip() {
-  const { strata, lit } = landedBy(year);
-  const host = document.getElementById("tmlStrata");
-  if (!host) return;
-  host.innerHTML = app.L.map(l => {
-    const s = strata[l.n] || { n: 0, in: 0 };
-    const on = s.in > 0;
-    return `<div class="tml__st ${on ? "on" : ""}" style="--c:${l.c}" title="${app.pad(l.n)} ${l.t}">
-              <b>${app.pad(l.n)}</b>
-            </div>`;
-  }).join("");
+  const { strata, lit, of } = landedBy(year);
+  const host = document.getElementById("tmlStrip");
+  if (host) {
+    host.innerHTML = app.L.map(l => {
+      const s = strata[l.n];
+      const frac = s ? s.in / s.n : 0;
+      return `<i title="${app.pad(l.n)} ${esc(l.t)} — ${s ? s.in : 0} of ${s ? s.n : 0} landed by ${year}"
+                style="--c:${l.c};opacity:${(0.1 + frac * 0.9).toFixed(2)}"></i>`;
+    }).join("");
+  }
+  const yrEl = document.getElementById("tmlYear");
+  if (yrEl) yrEl.textContent = year;
+  const litEl = document.getElementById("tmlLit");
+  if (litEl) litEl.innerHTML = `<b>${lit}</b> of <b>${of}</b> strata had something working`;
+}
 
-  const yEl = document.getElementById("tmlYear");
-  if (yEl) yEl.textContent = String(year);
+function paint() {
+  if (!svg) return;
+  strip();
+
+  let list = [...events];
+  if (layers.sortLag) {
+    list.sort((a, b) => (lagOf(b) ?? 999) - (lagOf(a) ?? 999));
+  }
+
+  const [minY, maxY] = D.meta.span;
+  const span = maxY - minY;
+  const xOf = y => 180 + ((Math.max(minY, Math.min(maxY, y)) - minY) / span) * (W - 220);
+
+  const rowH = 26;
+  H = Math.max(480, list.length * rowH + 60);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+  let out = `<g class="tml__grid">`;
+  for (let y = minY; y <= maxY; y += 10) {
+    const x = xOf(y);
+    out += `<line x1="${x}" y1="20" x2="${x}" y2="${H - 20}" stroke="var(--line)" stroke-dasharray="2 4" />
+            <text x="${x}" y="${H - 6}" text-anchor="middle" font-size="10" fill="var(--ash)">${y}</text>`;
+  }
+  out += `</g>`;
+
+  // Current year marker
+  const curX = xOf(year);
+  out += `<line x1="${curX}" y1="20" x2="${curX}" y2="${H - 20}" stroke="var(--pls)" stroke-width="1.5" />`;
+
+  out += `<g class="tml__rows">`;
+  list.forEach((e, i) => {
+    const y = 36 + i * rowH;
+    const x1 = xOf(e.invented);
+    const x2 = e.shipped != null ? xOf(e.shipped) : xOf(maxY);
+    const col = layers.reason ? (REASON_COLOUR[e.waitedFor] || "var(--ash)") : app.col(e.stratum);
+    const lag = lagOf(e);
+    const isDim = layers.long && lag != null && lag < 25;
+    const isFoc = focused === e.id;
+
+    out += `<g class="tml__r" data-id="${e.id}" transform="translate(0,${y})" style="cursor:pointer;opacity:${isDim ? 0.2 : 1}">
+      <text x="160" y="14" text-anchor="end" font-size="11" fill="${isFoc ? "var(--qz)" : "var(--ash2)"}" font-weight="${isFoc ? "600" : "400"}">${esc(e.label)}</text>
+      <rect x="${x1}" y="4" width="${Math.max(4, x2 - x1)}" height="12" rx="3" fill="${col}" fill-opacity="${e.invented <= year ? 0.85 : 0.2}" />
+      ${e.shipped == null ? `<path d="M${x2 + 4} 10l-4-4v8z" fill="${col}" />` : ""}
+      <text x="${x2 + 8}" y="14" font-size="10" fill="var(--ash)">${lag != null ? `${lag}y` : "—"}</text>
+    </g>`;
+  });
+  out += `</g>`;
+
+  svg.innerHTML = out;
+
+  svg.querySelectorAll(".tml__r").forEach(g => {
+    g.addEventListener("click", () => detail(g.dataset.id));
+  });
 }
 
 function detail(id) {
+  const e = events.find(v => v.id === id);
+  if (!e) return;
   focused = id;
-  const e = events.find(x => x.id === id);
-  const panel = document.getElementById("tmlPanel");
-  if (!panel || !e) return;
+  app.depth("tml", e.stratum);
 
-  const st = e.station && app.byId[e.station];
+  const st = app.byId[e.station];
+  const conf = (D.meta.confidence || []).find(c => c.id === e.confidence);
+  const why = (D.meta.waitedFor || []).find(c => c.id === e.waitedFor);
   const lag = lagOf(e);
-  const wait = D.meta.waitedFor.find(w => w.id === e.waitedFor);
 
-  panel.innerHTML = `
-    <div class="atl__pk">
-      <b class="atl__pno">${e.invented} → ${e.shipped || "present"}</b>
-      <span class="tag" style="--c:${app.col(e.stratum)}">${st ? `${app.pad(st.L)} ${st.n}` : `Stratum ${app.pad(e.stratum)}`}</span>
-      <span class="atl__prec atl__prec--${e.confidence}">${e.confidence} · ${lag != null ? `${lag} yr lag` : "In progress"}</span>
+  document.getElementById("tmlPanel").innerHTML = `
+    <div class="tml__pk">
+      <span>${e.invented}${e.shipped == null ? " → not shipped" : ` → ${e.shipped}`}</span>
+      ${lag == null ? `<b class="tml__lag tml__lag--open">no end date</b>`
+                    : `<b class="tml__lag">${lag} year${lag === 1 ? "" : "s"}</b>`}
+      <b class="tml__conf tml__conf--${e.confidence}" title="${esc(conf ? conf.note : "")}">${conf ? conf.label : e.confidence}</b>
     </div>
     <h3 class="atl__pn">${esc(e.label)}</h3>
-    <p class="atl__ps"><b>Waited for: ${wait ? wait.label : e.waitedFor}</b> — ${wait ? wait.note : ""}</p>
+    <p class="atl__ps">${app.pad(e.stratum)} · ${esc(app.lname(e.stratum))}${e.invented < D.meta.span[0] ? ` · demonstrated in ${e.invented}, before chart begins` : ""}</p>
     <p class="atl__pb">${esc(e.note)}</p>
-    ${e.source ? `<p class="cas__cite" style="margin-top:10px"><a href="${e.source.url}" target="_blank" rel="noopener">${esc(e.source.who)} — ${esc(e.source.what)} ↗</a></p>` : ""}
-    ${st ? `<button class="btn btn--p" data-open="${st.i}" style="margin-top:14px">Open ${st.n} station →</button>` : ""}`;
+    ${why ? `<p class="atl__pr"><i style="background:${REASON_COLOUR[e.waitedFor]}"></i>
+      <b>Waited for ${esc(why.label.toLowerCase())}:</b> ${esc(why.note)}</p>` : ""}
+    ${e.source ? `<p class="cas__cite">${e.source.url
+      ? `<a href="${e.source.url}" target="_blank" rel="noopener">${esc(e.source.who)} — ${esc(e.source.what || "")} ↗</a>`
+      : `${esc(e.source.who)} — ${esc(e.source.what || "")}`}</p>` : ""}
+    ${st ? `<div class="atl__pl"><button class="cas__st" data-station="${e.station}" style="--c:${app.col(st.L)}">
+      <b>${app.pad(st.L)}</b>${esc(st.n)}</button></div>` : ""}`;
 
-  const ob = panel.querySelector("[data-open]");
-  if (ob) ob.addEventListener("click", () => app.openStation(ob.dataset.open));
+  const b = document.querySelector("#tmlPanel [data-station]");
+  if (b) b.addEventListener("click", () => app.openStation(b.dataset.station));
   paint();
 }
 
-function togglePlay() {
-  const btn = document.getElementById("tmlPlay");
-  if (playing) {
-    clearInterval(playing);
-    playing = null;
-    if (btn) btn.textContent = "Play history";
-    return;
-  }
-  if (btn) btn.textContent = "Pause";
-  year = D.meta.span[0];
-  playing = setInterval(() => {
-    year++;
-    if (year > D.meta.span[1]) {
-      year = D.meta.span[1];
-      togglePlay();
-    }
-    const r = document.getElementById("tmlRange");
-    if (r) r.value = String(year);
-    paint();
-  }, 180);
+function goTo(id) {
+  const e = events.find(v => v.id === id);
+  if (!e) return;
+  setYear(D.meta.now);
+  detail(id);
+  document.querySelector(`#tmlSvg [data-id="${id}"]`)?.scrollIntoView({ block: "center", behavior: app.RM ? "auto" : "smooth" });
 }
 
-export async function initTimeline() {
-  svg = document.getElementById("tmlSvg");
-  const r = await fetch(new URL("../../data/static/timeline.json", import.meta.url));
-  if (!r.ok) throw new Error("Could not load timeline.json");
-  D = await r.json();
-  events = D.events;
+function setYear(y) {
+  year = Math.max(D.meta.span[0], Math.min(D.meta.now, Math.round(y)));
+  const range = document.getElementById("tmlRange");
+  if (range) range.value = String(year);
+  paint();
+}
 
-  const st = stats(D);
-  const sumEl = document.getElementById("tmlSummary");
-  if (sumEl) {
-    sumEl.innerHTML = `<b>${st.median} years</b> median lag between working prototype and industrial volume. Deep hardware base median lag: <b>${st.deep.median} years</b>; middle compute: <b>${st.middle.median} years</b>; shallow software & AI: <b>${st.shallow.median} years</b>.`;
+function play() {
+  if (playing) { stop(); return; }
+  if (year >= D.meta.now) setYear(D.meta.span[0]);
+  const btn = document.getElementById("tmlPlay");
+  if (btn) btn.textContent = "Pause";
+  playing = setInterval(() => {
+    if (year >= D.meta.now) { stop(); return; }
+    setYear(year + 1);
+  }, app.RM ? 20 : 90);
+}
+
+function stop() {
+  clearInterval(playing);
+  playing = null;
+  const btn = document.getElementById("tmlPlay");
+  if (btn) btn.textContent = "Sweep 1954 → now";
+}
+
+function layerControls() {
+  const host = document.getElementById("tmlLayers");
+  if (!host) return;
+  const LAYERS = [
+    ["reason", "What it waited for", "Colour by bottleneck category rather than stratum."],
+    ["long", "Only the long waits", "Dim everything that shipped within 25 years."],
+    ["sortLag", "Sort by wait", "Reorder longest wait first, instead of by depth in the stack."]
+  ];
+  host.innerHTML = LAYERS.map(([id, label, title]) =>
+    `<button class="atl__chip" data-layer="${id}" aria-pressed="${layers[id]}" title="${title}">${label}</button>`).join("");
+
+  host.querySelectorAll(".atl__chip").forEach(b =>
+    b.addEventListener("click", () => {
+      const id = b.dataset.layer;
+      layers[id] = !layers[id];
+      b.setAttribute("aria-pressed", String(layers[id]));
+      paint();
+    }));
+
+  const legend = document.getElementById("tmlLegend");
+  if (legend) {
+    legend.innerHTML = Object.entries(REASON_COLOUR).map(([k, c]) =>
+      `<span><i style="background:${c}"></i>${k}</span>`).join("");
   }
+}
+
+function size() {
+  if (!svg) return;
+  const r = svg.getBoundingClientRect();
+  W = Math.max(360, r.width || 1200);
+  paint();
+}
+
+const esc = s => (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+export async function initTimeline() {
+  const url = new URL("../../data/static/timeline.json", import.meta.url);
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`Could not load timeline.json (${r.status})`);
+  D = await r.json();
+  events = D.events || [];
+
+  svg = document.getElementById("tmlSvg");
 
   const range = document.getElementById("tmlRange");
   if (range) {
     range.min = String(D.meta.span[0]);
     range.max = String(D.meta.span[1]);
     range.value = String(year);
-    range.addEventListener("input", e => {
-      year = +e.target.value;
-      paint();
-    });
+    range.addEventListener("input", e => setYear(+e.target.value));
   }
 
   const playBtn = document.getElementById("tmlPlay");
-  if (playBtn) playBtn.addEventListener("click", togglePlay);
+  if (playBtn) playBtn.addEventListener("click", play);
 
-  const sortBtn = document.getElementById("tmlSort");
-  if (sortBtn) sortBtn.addEventListener("click", () => {
-    layers.sortLag = !layers.sortLag;
-    sortBtn.setAttribute("aria-pressed", String(layers.sortLag));
-    paint();
+  layerControls();
+
+  addEventListener("resize", () => {
+    if (document.getElementById("v-tml").classList.contains("on")) size();
   });
 
-  const reasonBtn = document.getElementById("tmlReason");
-  if (reasonBtn) reasonBtn.addEventListener("click", () => {
-    layers.reason = !layers.reason;
-    reasonBtn.setAttribute("aria-pressed", String(layers.reason));
-    paint();
-  });
-
-  paint();
+  app.lagGoTo = goTo;
+  app.lagFit = size;
+  size();
   if (events[0]) detail(events[0].id);
 }

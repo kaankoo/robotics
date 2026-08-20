@@ -58,8 +58,8 @@
       "lo": 3600,
       "hi": 14400,
       "unit": "cycles/hr",
-      "derivation": "Average 2 cycles per second across 6–30 articulated joint degrees of freedom.",
-      "source": { "who": "ISO 9283 Performance Standard", "when": "2024" }
+      "derivation": "Average 2 cycles per second across 6–30 articulated joint degrees of freedom in continuous pick-and-place or manipulation duty.",
+      "source": { "who": "ISO 9283 Manipulating Industrial Robots Standard", "when": "2024", "url": null }
     },
     "gridCarbonGPerKWh": {
       "label": "Grid carbon intensity",
@@ -67,8 +67,8 @@
       "lo": 180,
       "hi": 650,
       "unit": "gCO₂e/kWh",
-      "derivation": "Weighted global manufacturing grid electricity emissions intensity.",
-      "source": { "who": "IEA World Energy Outlook", "when": "2025" }
+      "derivation": "Weighted global manufacturing grid electricity emissions intensity per kWh consumed.",
+      "source": { "who": "IEA World Energy Outlook", "when": "2025", "url": null }
     },
     "embodiedSiliconGPerKg": {
       "label": "Silicon per robot kg",
@@ -76,8 +76,8 @@
       "lo": 0.25,
       "hi": 0.85,
       "unit": "g/kg",
-      "derivation": "Total packaged semiconductor die mass per kg of finished mechatronic robot.",
-      "source": { "who": "Teardown analysis (SystemPlus / Yole)", "when": "2025" }
+      "derivation": "Total packaged semiconductor die mass per kg of finished mechatronic robot across motor MCUs, gate drivers, and edge vision processors.",
+      "source": { "who": "Teardown analysis (SystemPlus / Yole Group)", "when": "2025", "url": null }
     },
     "refinedMetalFactor": {
       "label": "Refined metal multiplier",
@@ -85,8 +85,8 @@
       "lo": 2.2,
       "hi": 3.6,
       "unit": "×",
-      "derivation": "Ratio of virgin refined metals (NdFeB, Cu, 100Cr6, Li) to finished robot mass.",
-      "source": { "who": "Fraunhofer IPA LCA Study", "when": "2024" }
+      "derivation": "Ratio of virgin refined engineering materials (sintered NdFeB magnets, electrolytic copper, 100Cr6 bearing steel, structural aluminium) to finished robot mass.",
+      "source": { "who": "Fraunhofer IPA Mechatronics LCA Study", "when": "2024", "url": null }
     },
     "oreToRefinedRatio": {
       "label": "Ore extraction ratio",
@@ -94,8 +94,8 @@
       "lo": 45,
       "hi": 95,
       "unit": "×",
-      "derivation": "Mass of raw mined ore (bastnäsite, bauxite, iron ore, spodumene) per unit of refined engineering material.",
-      "source": { "who": "USGS Mineral Commodity Summaries", "when": "2025" }
+      "derivation": "Mass of raw mined mineral ore (bastnäsite rare earth deposit, bauxite, iron ore, spodumene) per unit mass of refined engineering material.",
+      "source": { "who": "USGS Mineral Commodity Summaries", "when": "2025", "url": null }
     },
     "maintOverheadFactor": {
       "label": "Maintenance & spare ratio",
@@ -103,33 +103,33 @@
       "lo": 0.10,
       "hi": 0.25,
       "unit": "× capex",
-      "derivation": "Annual maintenance, spare joints, and grease replenishment as percentage of initial capex.",
-      "source": { "who": "A3 Robotics Cost Benchmark", "when": "2025" }
+      "derivation": "Annual maintenance, spare actuator modules, seal replacement, and harmonic lubricant replenishment as percentage of initial capex.",
+      "source": { "who": "Association for Advancing Automation (A3)", "when": "2025", "url": null }
     }
   },
   "chain": [
-    { "id": "work_hour", "name": "Autonomous Work Hour", "stratum": 24, "unit": "count", "note": "One continuous hour of physical task execution (picking, welding, transport, or assembly)." },
-    { "id": "joint_cycles", "name": "Actuator Joint Cycles", "stratum": 8, "unit": "count", "note": "Cumulative mechanical oscillation and rotation cycles across all arm and leg joints." },
-    { "id": "electrical_energy", "name": "Electrical Energy", "stratum": 12, "unit": "Wh", "note": "Total grid electricity drawn for joint actuation, holding stall torque, compute NPU, and sensors." },
-    { "id": "wear_fraction", "name": "Design Life Consumed", "stratum": 21, "unit": "", "note": "Fraction of the robot's certified MTBF / B10 mechanical life expended during this hour." },
-    { "id": "embodied_hardware", "name": "Amortized Hardware Mass", "stratum": 14, "unit": "g", "note": "Mass of physical robot chassis, motors, and reducers allocated to this single hour of service." },
-    { "id": "semiconductor_silicon", "name": "Amortized Silicon Mass", "stratum": 11, "unit": "g", "note": "Pure monocrystalline silicon die mass embodied in motor MCUs, GaN power stages, and edge NPUs." },
-    { "id": "refined_materials", "name": "Refined Engineering Alloys", "stratum": 2, "unit": "g", "note": "Virgin sintered NdFeB magnets, cathode chemicals, copper wire, and vacuum-melted gear steels." },
-    { "id": "lithosphere_ore", "name": "Lithosphere Mined Ore", "stratum": 1, "unit": "g", "note": "Total raw mined rock (bastnäsite rare earth ore, iron ore, bauxite, spodumene) extracted from the earth." }
+    { "id": "work_hour", "station": null, "label": "1 hour of autonomous work", "sub": "one continuous hour of physical task execution", "why": "the terminal unit of the stack" },
+    { "id": "joint_cycles", "station": "bldc", "label": "Actuator joint cycles", "sub": "cumulative mechanical oscillation across all degrees of freedom", "why": "cycles per hour" },
+    { "id": "electrical_energy", "station": "substation", "label": "Electrical energy drawn", "sub": "motor mechanical output, winding I²R resistive losses, and NPU compute", "why": "average power draw" },
+    { "id": "wear_fraction", "station": "fatigue", "label": "Design life consumed", "sub": "fraction of certified B10 mechanical life expended during this hour", "why": "÷ certified lifetime hours" },
+    { "id": "embodied_hardware", "station": "arm", "label": "Amortised hardware mass", "sub": "chassis, motors, strain-wave gears, and bearings allocated to this hour", "why": "robot mass ÷ lifetime hours" },
+    { "id": "semiconductor_silicon", "station": "edgesoc", "label": "Amortised silicon die mass", "sub": "monocrystalline silicon in motor MCUs, GaN power stages, and edge NPUs", "why": "silicon mass per robot kg" },
+    { "id": "refined_materials", "station": "magnet", "label": "Refined engineering alloys", "sub": "sintered NdFeB magnets, copper wire, and vacuum-melted flexspline steel", "why": "machining kerf and alloy yields" },
+    { "id": "lithosphere_ore", "station": "ndpr", "label": "Lithosphere mined ore", "sub": "raw bastnäsite, iron ore, and bauxite extracted from the earth", "why": "geological ore concentration ratio" }
   ],
   "branches": [
-    { "id": "capex_hourly", "name": "Hourly Hardware Amortisation", "stratum": 26, "unit": "$/h", "note": "Depreciation of initial machine purchase price over operational service life." },
-    { "id": "labor_arbitrage", "name": "Net Labor Arbitrage", "stratum": 27, "unit": "$/h", "note": "Net cost difference between manual human labor and the fully-loaded autonomous robot hour." },
-    { "id": "co2_hourly", "name": "Emissions Footprint", "stratum": 27, "unit": "g!", "note": "Grid greenhouse gas emissions generated per operational robot hour." }
+    { "id": "capex_hourly", "from": "wear_fraction", "via": "maintOverheadFactor", "station": "raas", "label": "Hourly machine amortisation", "sub": "hardware depreciation plus maintenance overhead per hour" },
+    { "id": "labor_arbitrage", "from": "capex_hourly", "via": "maintOverheadFactor", "station": "payback", "label": "Hourly labor cost delta", "sub": "fully-loaded human worker wage minus hourly robot operating cost" },
+    { "id": "co2_hourly", "from": "electrical_energy", "via": "gridCarbonGPerKWh", "station": "scope2", "label": "Grid carbon emissions", "sub": "greenhouse gas emissions emitted per autonomous work hour" }
   ],
   "stepSources": {
-    "work_hour": "Canonical terminal unit across all 3 machine classes.",
-    "joint_cycles": "Average 2 Hz cyclic motion across 6-to-30 DOF robotic joints.",
-    "electrical_energy": "Sum of motor mechanical output, I²R resistive winding heat, and onboard NPU compute.",
-    "wear_fraction": "Inverse of certified B10 design life (15,000–30,000 operating hours).",
-    "embodied_hardware": "Robot total mass divided by rated operating lifetime hours.",
-    "semiconductor_silicon": "Total silicon die area in edge SoCs, MCUs, and drivers amortized per hour.",
-    "refined_materials": "Upstream feedstock required including machining kerf and casting yields.",
-    "lithosphere_ore": "Geological grade concentration factors across bastnäsite, iron ore, and spodumene."
+    "work_hour": "cyclesPerHour",
+    "joint_cycles": "cyclesPerHour",
+    "electrical_energy": "gridCarbonGPerKWh",
+    "wear_fraction": "cyclesPerHour",
+    "embodied_hardware": "refinedMetalFactor",
+    "semiconductor_silicon": "embodiedSiliconGPerKg",
+    "refined_materials": "refinedMetalFactor",
+    "lithosphere_ore": "oreToRefinedRatio"
   }
 }

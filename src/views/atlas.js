@@ -1,252 +1,262 @@
 /* ============================================================
-   ATLAS — where the physical-intelligence stack physically is.
+   ATLAS — fifty-six key robotics sites, drawn to true scale.
    ============================================================ */
 
 import { app } from "../core/app.js";
-import {
-  transform, project, unproject, wrapLon, fitTo,
-  ringPath, graticule, R_EARTH
-} from "../lib/projection.js";
+import { project, transform, wrapLon, ringPath } from "../lib/projection.js";
 
-const NS = "http://www.w3.org/2000/svg";
-const KM_PER_DEG = Math.PI * R_EARTH / 180;
-const K_MIN = 0.9;
-const K_MAX = 2600;
-const LABEL_MAX = 13;
-const WRAP = [-360, 0, 360];
+const KIND = {
+  mine: "Mineral extraction",
+  refinery: "Metals & magnetic alloys",
+  foundry: "Precision casting & foundry",
+  fab: "Semiconductor fabrication",
+  substation: "High-voltage power grid",
+  assembly: "Actuator & robotics assembly",
+  research: "Physical intelligence AI lab",
+  facility: "Manufacturing hub",
+  chokepoint: "Chokepoint"
+};
 
-let D = null, W = null;
-let svg = null, gGeo = null, gMarks = null, defs = null, gRings = null, gRisk = null, gStroke = [];
-let sites = [], marks = [];
-let cam = { lon: 138, lat: 36, k: 3.5 };
-let target = null, raf = null, dragging = null, moved = 0;
-let layers = { scale: true, names: false };
+const PRECISION = {
+  sited: "the operator publishes this location",
+  approx: "reconstructed from public reporting",
+  area: "a district — the point is its centre"
+};
+
+let D = null, world = null, svg = null;
+let sites = [];
 let focused = null;
-let Wd = 1200, Hd = 560;
+let W = 1200, H = 620;
+let cam = { lon: 138, lat: 36, k: 3.5 };
+let targetCam = { ...cam };
+let raf = null;
+let dragging = null;
 
-const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
-const clampK = v => Math.max(K_MIN, Math.min(K_MAX, v));
+const layers = { scale: true, chokepoint: true, names: false };
 
-function colourOf(s) {
-  const st = s.stations && s.stations[0] && app.byId[s.stations[0]];
-  return st ? app.col(st.L) : "var(--fg)";
+function paint() {
+  if (!svg) return;
+  const p = (lon, lat) => project(lon, lat, cam, W, H);
+
+  let out = `<g class="atl__geo" transform="${transform(cam, W, H)}">`;
+  out += `<g class="atl__land">`;
+  if (world && world.polygons) {
+    for (const poly of world.polygons) {
+      let d = "";
+      for (let i = 0; i < poly.length; i += 2) {
+        d += (i === 0 ? "M" : "L") + poly[i].toFixed(2) + " " + (-poly[i + 1]).toFixed(2);
+      }
+      out += `<path d="${d}Z" />`;
+    }
+  }
+  out += `</g>`;
+
+  // Geodesic radius rings
+  if (layers.scale) {
+    out += `<g class="atl__rings">`;
+    for (const s of sites) {
+      const rad = s.radius || 15;
+      const d = ringPath(s.lon, s.lat, rad, 48);
+      const cls = s.chokepoint ? "atl__ring atl__ring--cp" : "atl__ring";
+      out += `<path class="${cls}" d="${d}" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-width="${(1.2 / cam.k).toFixed(4)}" />`;
+    }
+    out += `</g>`;
+  }
+  out += `</g>`;
+
+  // Markers in screen-space
+  out += `<g class="atl__markers">`;
+  for (const s of sites) {
+    const wrappedLon = wrapLon(s.lon, cam.lon);
+    const pt = p(wrappedLon, s.lat);
+    if (pt.x < -40 || pt.x > W + 40 || pt.y < -40 || pt.y > H + 40) continue;
+    const isFoc = focused === s.id;
+    const col = s.chokepoint ? "var(--brs)" : (s.stratum ? app.col(s.stratum) : "var(--ash2)");
+    const r = isFoc ? 8 : (s.chokepoint ? 5.5 : 3.8);
+
+    out += `<g class="atl__m" data-id="${s.id}" transform="translate(${pt.x.toFixed(1)},${pt.y.toFixed(1)})" style="cursor:pointer">
+      <circle r="${r + (isFoc ? 4 : 2)}" fill="${col}" fill-opacity="${isFoc ? 0.4 : 0.18}" />
+      <circle r="${r}" fill="${col}" stroke="var(--sub)" stroke-width="1.2" />
+      ${layers.names || isFoc ? `<text class="atl__ml" y="-12" text-anchor="middle" fill="var(--qz)" font-size="11" font-weight="${isFoc ? "600" : "400"}">${esc(s.label)}</text>` : ""}
+    </g>`;
+  }
+  out += `</g>`;
+
+  svg.innerHTML = out;
+
+  svg.querySelectorAll(".atl__m").forEach(g => {
+    g.addEventListener("click", e => {
+      e.stopPropagation();
+      tap(g.dataset.id);
+    });
+  });
+
+  const scaleKm = ((W / cam.k) * 111.32 * Math.cos(cam.lat * Math.PI / 180)).toFixed(0);
+  const scaleEl = document.getElementById("atlScale");
+  if (scaleEl) scaleEl.textContent = `~${scaleKm} km across`;
 }
 
-function clampCam(c) {
-  const k = clampK(c.k);
-  const halfLat = Hd / 2 / k;
-  const lat = Math.max(-88 + halfLat, Math.min(88 - halfLat, c.lat));
-  const lon = ((c.lon + 180) % 360 + 360) % 360 - 180;
-  return { lon, lat: Hd / k >= 176 ? 0 : lat, k };
+function detail(s) {
+  focused = s.id;
+  const first = app.byId[s.stations?.[0]];
+  if (first) app.depth("atl", first.L);
+
+  const chips = (s.stations || []).filter(id => app.byId[id]).map(id => {
+    const st = app.byId[id];
+    return `<button class="cas__st" data-station="${id}" style="--c:${app.col(st.L)}"><b>${app.pad(st.L)}</b>${esc(st.n)}</button>`;
+  }).join("");
+
+  document.getElementById("atlPanel").innerHTML = `
+    <div class="atl__pk">
+      <span>${esc(KIND[s.kind] || s.kind)}</span>
+      <b class="atl__prec atl__prec--${s.precision}" title="${esc(PRECISION[s.precision] || "")}">${s.precision}</b>
+      ${s.radius ? `<em class="atl__rad">${s.radius < 10 ? s.radius : Math.round(s.radius)} km radius, drawn to scale</em>` : ""}
+    </div>
+    <h3 class="atl__pn">${esc(s.label)}</h3>
+    <p class="atl__ps">${esc(s.place || s.country)} · ${s.lat.toFixed(3)}°, ${s.lon.toFixed(3)}°</p>
+    <p class="atl__pb">${esc(s.role || s.note || "")}</p>
+    ${s.orgs ? `<p class="atl__pr"><b>Key operators:</b> ${esc(s.orgs.join(", "))}</p>` : ""}
+    ${s.source ? `<p class="cas__cite">${s.source.url
+      ? `<a href="${s.source.url}" target="_blank" rel="noopener">${esc(s.source.who)} — ${esc(s.source.what || "")} ↗</a>`
+      : `${esc(s.source.who)} — ${esc(s.source.what || "")}`}</p>` : ""}
+    ${chips ? `<div class="atl__pl">${chips}</div>` : ""}
+    ${s.ruler ? `<button class="grain__r" data-ruler="${s.ruler}">See this distance on the Ruler →</button>` : ""}`;
+
+  document.querySelectorAll("#atlPanel [data-station]").forEach(b =>
+    b.addEventListener("click", () => app.openStation(b.dataset.station)));
+  document.querySelectorAll("#atlPanel [data-ruler]").forEach(b =>
+    b.addEventListener("click", () => { app.show("rul"); setTimeout(() => app.rulerGoTo(b.dataset.ruler), 60); }));
+  paint();
 }
 
-export function camera() { return { ...cam, W: Wd, H: Hd }; }
+function tap(id) {
+  const s = sites.find(x => x.id === id);
+  if (!s) return;
+  detail(s);
+  document.getElementById("atlPanel")?.scrollIntoView({ behavior: app.RM ? "auto" : "smooth", block: "nearest" });
+}
+
+function goTo(id) {
+  const s = sites.find(x => x.id === id);
+  if (!s) return;
+  glide({ lon: s.lon, lat: s.lat, k: s.zoom || 3.5 });
+  detail(s);
+}
 
 function glide(to) {
-  target = clampCam(to);
+  targetCam = { ...to };
   if (raf) return;
   const step = () => {
-    const dl = wrapLon(target.lon, cam.lon) - cam.lon;
-    const da = target.lat - cam.lat;
-    const dk = Math.log(target.k) - Math.log(cam.k);
-    if (Math.abs(dl) < 1e-4 && Math.abs(da) < 1e-4 && Math.abs(dk) < 1e-5) {
-      cam = target; raf = null; paint(); return;
+    const dLon = targetCam.lon - cam.lon;
+    const dLat = targetCam.lat - cam.lat;
+    const dK = targetCam.k - cam.k;
+    if (Math.abs(dLon) < 1e-3 && Math.abs(dLat) < 1e-3 && Math.abs(dK) < 1e-3) {
+      cam = { ...targetCam };
+      raf = null;
+      paint();
+      return;
     }
-    const e = app.RM ? 1 : 0.17;
-    cam = clampCam({ lon: cam.lon + dl * e, lat: cam.lat + da * e, k: Math.exp(Math.log(cam.k) + dk * e) });
+    const f = app.RM ? 1 : 0.16;
+    cam.lon += dLon * f;
+    cam.lat += dLat * f;
+    cam.k += dK * f;
     paint();
     raf = requestAnimationFrame(step);
   };
   raf = requestAnimationFrame(step);
 }
 
-function set(c) { if (raf) { cancelAnimationFrame(raf); raf = null; } cam = clampCam(c); paint(); }
+function stops() {
+  const host = document.getElementById("atlStops");
+  if (!host) return;
+  host.innerHTML = (D.stops || []).map(st =>
+    `<button class="rul__stop atl__stop" data-id="${st.id}"><b>${st.label}</b><span>${st.sub}</span></button>`).join("");
 
-function frame(s, mult = 5.5) {
-  const spanKm = Math.max(2, (s.radius || 6) * mult);
-  const dLat = spanKm / 111.32;
-  const dLon = dLat / Math.max(0.12, Math.cos(s.lat * Math.PI / 180));
-  return fitTo({ w: s.lon - dLon, e: s.lon + dLon, s: s.lat - dLat, n: s.lat + dLat }, Wd, Hd, 0.06);
+  host.querySelectorAll(".atl__stop").forEach(b =>
+    b.addEventListener("click", () => goTo(b.dataset.id)));
 }
 
-function paint() {
-  gGeo.setAttribute("transform", transform(cam, Wd, Hd));
+function layerControls() {
+  const host = document.getElementById("atlLayers");
+  if (!host) return;
+  const LAYERS = [
+    ["scale", "Geodesic rings", "Circles showing true physical extent in kilometres."],
+    ["chokepoint", "Chokepoints only", "Highlight single points of failure in amber."],
+    ["names", "All site labels", "Show names next to every marker across the globe."]
+  ];
+  host.innerHTML = LAYERS.map(([id, label, title]) =>
+    `<button class="atl__chip" data-layer="${id}" aria-pressed="${layers[id]}" title="${title}">${label}</button>`).join("");
 
-  const u = 1 / cam.k;
-  for (const [g, w] of gStroke) g.setAttribute("stroke-width", (w * u).toFixed(6));
-
-  const on = [];
-  for (const m of marks) {
-    const p = project(wrapLon(m.s.lon, cam.lon), m.s.lat, cam, Wd, Hd);
-    m.p = p;
-    m.on = p.x > -60 && p.x < Wd + 60 && p.y > -40 && p.y < Hd + 40;
-    if (m.on) on.push(m);
-  }
-
-  const named = layers.names || on.length <= LABEL_MAX;
-  const rank = m => (m.s.id === focused ? 0 : m.s.chokepoint ? 1 : 2);
-  const placed = [];
-  for (const m of marks) m.label = false;
-  for (const m of on.slice().sort((a, b) => rank(a) - rank(b))) {
-    if (rank(m) > 1 && !named) continue;
-    const w = m.s.name.length * 5.7, box =
-      { x0: m.p.x - w / 2, x1: m.p.x + w / 2, y0: m.p.y - 22, y1: m.p.y - 8 };
-    if (placed.some(b => b.x0 < box.x1 && box.x0 < b.x1 && b.y0 < box.y1 && box.y0 < b.y1)) continue;
-    placed.push(box);
-    m.label = true;
-  }
-  for (const m of marks) {
-    m.g.setAttribute("transform", `translate(${m.p.x.toFixed(1)},${m.p.y.toFixed(1)})`);
-    m.g.setAttribute("display", m.on ? "inline" : "none");
-    m.t.setAttribute("display", m.label ? "inline" : "none");
-    m.g.classList.toggle("on", m.s.id === focused);
-  }
-
-  gRings.setAttribute("display", layers.scale ? "inline" : "none");
-
-  const km = (Wd / cam.k) * KM_PER_DEG * Math.cos(cam.lat * Math.PI / 180);
-  const scEl = document.getElementById("atlScale");
-  if (scEl) scEl.textContent = km >= 1000 ? `${Math.round(km / 100) / 10} thousand km` : km >= 10 ? `${Math.round(km)} km` : `${km.toFixed(1)} km`;
+  host.querySelectorAll(".atl__chip").forEach(b =>
+    b.addEventListener("click", () => {
+      const id = b.dataset.layer;
+      layers[id] = !layers[id];
+      b.setAttribute("aria-pressed", String(layers[id]));
+      paint();
+    }));
 }
 
-function detail(s) {
-  focused = s ? s.id : null;
-  const panel = document.getElementById("atlPanel");
-  if (!panel || !s) return;
-
-  const st = s.stations && s.stations[0] && app.byId[s.stations[0]];
-  panel.innerHTML = `
-    <div class="atl__pk">
-      <b class="atl__pno">${s.country}</b>
-      <span class="tag" style="--c:${st ? app.col(st.L) : "var(--fg)"}">${st ? `${app.pad(st.L)} ${st.n}` : "Global Site"}</span>
-      ${s.chokepoint ? `<span class="moat__chk">Single point of failure</span>` : ""}
-      <span class="atl__prec atl__prec--${s.precision}">${s.precision} · ${s.radius} km radius</span>
-    </div>
-    <h3 class="atl__pn">${esc(s.name)}</h3>
-    <p class="atl__ps">${esc(s.role)}</p>
-    <p class="atl__pb">${esc(s.detail)}</p>
-    <div class="blk__h" style="margin-top:12px">Key Organisations</div>
-    <div class="co">${(s.orgs || []).map(o => `<div class="nolink"><span class="cnm">${esc(o)}</span></div>`).join("")}</div>
-    ${st ? `<button class="btn btn--p" data-open="${st.i}" style="margin-top:14px">Open ${st.n} dossier →</button>` : ""}`;
-
-  const ob = panel.querySelector("[data-open]");
-  if (ob) ob.addEventListener("click", () => app.openStation(ob.dataset.open));
+function size() {
+  if (!svg) return;
+  const r = svg.getBoundingClientRect();
+  W = Math.max(360, r.width || 1200);
+  H = Math.max(380, r.height || 620);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   paint();
 }
 
+const esc = s => (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
 export async function initAtlas() {
-  svg = document.getElementById("atlSvg");
-  const [ra, rw] = await Promise.all([
+  const [rD, rW] = await Promise.all([
     fetch(new URL("../../data/static/atlas.json", import.meta.url)),
     fetch(new URL("../../data/static/world.json", import.meta.url))
   ]);
-  if (!ra.ok || !rw.ok) throw new Error("Could not load atlas or world data");
-  D = await ra.json();
-  W = await rw.json();
+  D = await rD.json();
+  world = await rW.json();
+  sites = D.sites || [];
 
-  sites = D.sites;
+  svg = document.getElementById("atlSvg");
 
-  svg.setAttribute("viewBox", `0 0 ${Wd} ${Hd}`);
-  defs = document.createElementNS(NS, "defs");
-  gGeo = document.createElementNS(NS, "g");
-  gMarks = document.createElementNS(NS, "g");
-  svg.appendChild(defs);
-  svg.appendChild(gGeo);
-  svg.appendChild(gMarks);
+  stops();
+  layerControls();
 
-  /* Build map geometry */
-  const tmpl = document.createElementNS(NS, "g");
-  tmpl.id = "world-tmpl";
-
-  const gGrat = document.createElementNS(NS, "g");
-  gGrat.innerHTML = graticule(30);
-  tmpl.appendChild(gGrat);
-  gStroke.push([gGrat, 0.7]);
-
-  const gLand = document.createElementNS(NS, "g");
-  const pLand = document.createElementNS(NS, "path");
-  pLand.setAttribute("d", W.land);
-  pLand.setAttribute("class", "atl__land");
-  gLand.appendChild(pLand);
-  tmpl.appendChild(gLand);
-
-  gRings = document.createElementNS(NS, "g");
-  gRings.setAttribute("class", "atl__rings");
-  sites.forEach(s => {
-    const p = document.createElementNS(NS, "path");
-    p.setAttribute("d", ringPath(s.lon, s.lat, s.radius));
-    p.setAttribute("fill", colourOf(s));
-    p.setAttribute("fill-opacity", s.chokepoint ? "0.22" : "0.12");
-    p.setAttribute("stroke", colourOf(s));
-    p.setAttribute("stroke-opacity", "0.6");
-    gRings.appendChild(p);
-  });
-  tmpl.appendChild(gRings);
-  gStroke.push([gRings, 1.2]);
-
-  defs.appendChild(tmpl);
-
-  WRAP.forEach(dx => {
-    const u = document.createElementNS(NS, "use");
-    u.setAttribute("href", "#world-tmpl");
-    u.setAttribute("x", String(dx));
-    gGeo.appendChild(u);
-  });
-
-  marks = sites.map(s => {
-    const g = document.createElementNS(NS, "g");
-    g.setAttribute("class", `atl__m ${s.chokepoint ? "atl__m--chk" : ""}`);
-    const c = document.createElementNS(NS, "circle");
-    c.setAttribute("r", s.chokepoint ? "5.5" : "4");
-    c.setAttribute("fill", colourOf(s));
-    const t = document.createElementNS(NS, "text");
-    t.setAttribute("class", "atl__lbl");
-    t.setAttribute("y", "-10");
-    t.setAttribute("text-anchor", "middle");
-    t.textContent = s.name.length > 20 ? s.name.slice(0, 19) + "…" : s.name;
-    g.appendChild(c);
-    g.appendChild(t);
-    g.addEventListener("click", e => {
-      e.stopPropagation();
-      detail(s);
-      glide(frame(s));
-    });
-    gMarks.appendChild(g);
-    return { s, g, t, p: { x: 0, y: 0 }, on: true, label: false };
-  });
-
-  document.getElementById("atlStops").innerHTML = D.meta.stops.map(st =>
-    `<button class="chip" data-stop="${st.id}">${st.name}</button>`).join("");
-
-  document.querySelectorAll("#atlStops .chip").forEach(b =>
-    b.addEventListener("click", () => {
-      const st = D.meta.stops.find(x => x.id === b.dataset.stop);
-      if (st) glide({ lon: st.lon, lat: st.lat, k: st.zoom });
-    }));
-
-  const resetBtn = document.getElementById("atlReset");
-  if (resetBtn) resetBtn.addEventListener("click", () =>
-    glide({ lon: 138, lat: 36, k: 3.5 }));
+  const totalRadiusArea = sites.reduce((sum, s) => sum + Math.PI * (s.radius || 10) * (s.radius || 10), 0);
+  const claim = document.getElementById("atlClaim");
+  if (claim) {
+    claim.innerHTML = `<button class="atl__claimb">
+      <b>${sites.length} sites</b> across <b>${new Set(sites.map(s => s.country)).size} countries</b> enclose roughly <b>${Math.round(totalRadiusArea).toLocaleString("en")} km²</b> of specialised ground.
+    </button>`;
+  }
 
   svg.addEventListener("mousedown", e => {
     dragging = { x: e.clientX, y: e.clientY, lon: cam.lon, lat: cam.lat };
-    moved = 0;
   });
-  addEventListener("mousemove", e => {
+  window.addEventListener("mousemove", e => {
     if (!dragging) return;
-    const dx = e.clientX - dragging.x, dy = e.clientY - dragging.y;
-    moved += Math.abs(dx) + Math.abs(dy);
-    set({ lon: dragging.lon - dx / cam.k, lat: dragging.lat + dy / cam.k, k: cam.k });
+    const dx = e.clientX - dragging.x;
+    const dy = e.clientY - dragging.y;
+    cam.lon = dragging.lon - (dx / (cam.k * 3.2));
+    cam.lat = Math.max(-75, Math.min(75, dragging.lat + (dy / (cam.k * 3.2))));
+    targetCam = { ...cam };
+    paint();
   });
-  addEventListener("mouseup", () => { dragging = null; });
+  window.addEventListener("mouseup", () => { dragging = null; });
 
   svg.addEventListener("wheel", e => {
     e.preventDefault();
-    const factor = e.deltaY < 0 ? 1.2 : 1 / 1.2;
-    set({ lon: cam.lon, lat: cam.lat, k: cam.k * factor });
+    const factor = e.deltaY < 0 ? 1.15 : 0.85;
+    cam.k = Math.max(1.2, Math.min(24, cam.k * factor));
+    targetCam = { ...cam };
+    paint();
   }, { passive: false });
 
-  paint();
-  const defaultSite = sites.find(s => s.id === "hotaka-nagano") || sites[0];
-  if (defaultSite) detail(defaultSite);
+  addEventListener("resize", () => {
+    if (document.getElementById("v-atl").classList.contains("on")) size();
+  });
+
+  app.atlasGoTo = goTo;
+  app.atlasFit = size;
+  size();
+  if (sites[0]) detail(sites[0]);
 }
