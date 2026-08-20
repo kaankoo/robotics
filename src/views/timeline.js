@@ -7,7 +7,7 @@
 
 import { app } from "../core/app.js";
 
-const GUTTER = 224;    // pixels of label before the axis starts
+const GUTTER = 252;    // pixels of label before the axis starts
 const PAD_R = 26;
 const ROW = 15;
 const BAR = 7;
@@ -129,7 +129,7 @@ function paint() {
               opacity="${!started ? 0.13 : dim ? 0.22 : 1}">
               <rect class="tml__hit" x="0" y="${yTop}" width="${W}" height="${ROW}"/>`;
 
-    /* label gutter */
+    /* label gutter: right aligned at GUTTER - 12 */
     out += `<text class="tml__l" x="${GUTTER - 12}" y="${cy + 3.5}" text-anchor="end">${esc(e.label)}</text>
             <rect class="tml__pip" x="8" y="${cy - 4}" width="4" height="8" fill="${app.col(e.stratum)}"/>
             <text class="tml__s" x="18" y="${cy + 3.5}">${app.pad(e.stratum)}</text>`;
