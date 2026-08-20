@@ -12,13 +12,12 @@ const NS = "http://www.w3.org/2000/svg";
 const KM_PER_DEG = Math.PI * R_EARTH / 180;   // 111.19 km per degree of great circle
 const K_MIN = 0.9;        // pixels per degree — whole world
 const K_MAX = 2600;       // high zoom
-const LABEL_MAX = 13;     // name everything once this few are on screen
 const WRAP = [-360, 0, 360];
 
 let D = null, W = null;
 let svg = null, gGeo = null, gMarks = null, defs = null, gRings = null, gStroke = [];
 let sites = [], marks = [];
-let cam = { lon: 138, lat: 36, k: 3.5 };
+let cam = { lon: 40, lat: 22, k: 3 };
 let target = null, raf = null, dragging = null, moved = 0;
 let layers = { scale: true, chokepoint: false, names: false };
 let focused = null;
@@ -88,6 +87,16 @@ function frame(s, mult = 5.5) {
   return fitTo({ w: s.lon - dLon, e: s.lon + dLon, s: s.lat - dLat, n: s.lat + dLat }, Wd, Hd, 0.06);
 }
 
+/** Reset and frame all sites globally across the map */
+function world() {
+  focused = null;
+  const b = sites.reduce((a, s) => ({
+    w: Math.min(a.w, s.lon), e: Math.max(a.e, s.lon),
+    s: Math.min(a.s, s.lat), n: Math.max(a.n, s.lat)
+  }), { w: 180, e: -180, s: 90, n: -90 });
+  glide(fitTo({ w: b.w - 8, e: b.e + 8, s: b.s - 8, n: b.n + 8 }, Wd, Hd, 0.04));
+}
+
 function paint() {
   if (!svg || !gGeo) return;
   gGeo.setAttribute("transform", transform(cam, Wd, Hd));
@@ -103,12 +112,13 @@ function paint() {
     if (m.on) on.push(m);
   }
 
-  const named = layers.names || on.length <= LABEL_MAX;
+  // By default keep labels off unless explicitly toggled or focused
+  const named = layers.names;
   const rank = m => (m.s.id === focused ? 0 : m.s.chokepoint ? 1 : 2);
   const placed = [];
   for (const m of marks) m.label = false;
   for (const m of on.slice().sort((a, b) => rank(a) - rank(b))) {
-    if (rank(m) > 1 && !named) continue;
+    if (m.s.id !== focused && !named) continue;
     const labelStr = m.s.label || m.s.name || "";
     const w = labelStr.length * 5.7;
     const box = { x0: m.p.x - w / 2, x1: m.p.x + w / 2, y0: m.p.y - 22, y1: m.p.y - 8 };
@@ -189,10 +199,6 @@ function goTo(id) {
   detail(s);
 }
 
-function worldView() {
-  glide({ lon: 40, lat: 22, k: Math.max(K_MIN, Wd / 380) });
-}
-
 function syncLayers() {
   document.querySelectorAll("#atlLayers button").forEach(b =>
     b.setAttribute("aria-pressed", String(layers[b.dataset.layer])));
@@ -220,11 +226,11 @@ const LAYERS = [
 ];
 
 const STOPS = [
-  ["World", ""],
+  ["World", null],
   ["Nagano (Harmonic Drive)", "hotaka-nagano"],
   ["Bayan Obo (Rare Earths)", "bayan-obo-mine"],
   ["Tsu, Mie (Nabtesco)", "tsu-mie-nabtesco"],
-  ["Odense (Cobots)", "odense-hub"],
+  ["Odense (Cobots)", "odense-robotics"],
   ["SF Bay (Foundation AI)", "sf-bay-physical-ai"]
 ];
 
@@ -308,7 +314,7 @@ export async function initAtlas() {
   document.getElementById("atlStops").innerHTML = STOPS
     .map(([l, id]) => `<button data-goto="${id || ""}">${l}</button>`).join("");
   document.querySelectorAll("#atlStops button").forEach(b =>
-    b.addEventListener("click", () => b.dataset.goto ? goTo(b.dataset.goto) : worldView()));
+    b.addEventListener("click", () => b.dataset.goto ? goTo(b.dataset.goto) : world()));
 
   svg.addEventListener("wheel", e => {
     e.preventDefault();
@@ -360,6 +366,6 @@ export async function initAtlas() {
   concentration();
   syncLayers();
   size();
-  worldView();
+  world();
   if (sites[0]) detail(sites[0]);
 }
