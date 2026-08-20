@@ -23,7 +23,7 @@ const SI = [
 ];
 
 let D = null, svg = null, stage = null, gWorld = null, gAxis = null;
-let z = -5.3, target = -5.3, raf = null, dragging = null;
+let z = -9.3, target = -9.3, raf = null, dragging = null;
 let objects = [];
 let W = 1200, H = 560;
 let sweeping = null;
@@ -68,9 +68,7 @@ function jump(to) { endSweep(); if (raf) { cancelAnimationFrame(raf); raf = null
 
 function focus(id) {
   const o = objects.find(x => x.id === id);
-  if (!o) return;
-  jump(o.lg);
-  detail(o);
+  if (o) jump(o.lg);
 }
 
 function lane(o, px) {
@@ -127,7 +125,7 @@ function paint() {
     const s = p.px / 100;
     const cy = lane(o, p.px);
 
-    out += `<g class="rul__o rul__obj" data-id="${o.id}" opacity="${p.op.toFixed(3)}"
+    out += `<g class="rul__o" data-id="${o.id}" opacity="${p.op.toFixed(3)}"
               transform="translate(${x2(p.x)},${cy})">
               <g transform="translate(${-p.px / 2},${-p.px / 2}) scale(${s})">${o.svg}</g>`;
 
@@ -209,56 +207,59 @@ function detail(o) {
   if (b) b.addEventListener("click", () => app.openStation(b.dataset.station));
 }
 
+/* ---------- the sweep ---------- */
+
+const SWEEP_LABEL = "Sweep lattice → Earth";
+const SWEEP_PX = 5.4;    // per frame — full journey in ~28s
+
 function sweep() {
   if (sweeping) { endSweep(); return; }
-  jump(D.meta.span[0]);
-  const btn = document.getElementById("rulSweep");
-  if (btn) { btn.classList.add("on"); btn.textContent = "pause"; }
-  const start = performance.now();
-  const dur = app.RM ? 4000 : 28000;
-  const from = D.meta.span[0], span = D.meta.span[1] - from;
-  const tick = now => {
-    const u = Math.min(1, (now - start) / dur);
-    z = from + span * u;
-    target = z;
+  if (raf) { cancelAnimationFrame(raf); raf = null; }
+  const [lo, hi] = D.meta.span;
+  if (z >= hi - 0.05) { z = target = lo; }
+  const b = document.getElementById("rulPlay");
+  if (b) b.textContent = "Stop";
+  const perFrame = app.RM ? (hi - lo) / 90 : SWEEP_PX / PX_DECADE;
+  const step = () => {
+    if (!document.getElementById("v-rul").classList.contains("on")) { endSweep(); return; }
+    z = target = clamp(z + perFrame);
     paint();
-    if (u < 1) sweeping = requestAnimationFrame(tick);
-    else endSweep();
+    if (z >= hi - 1e-6) { endSweep(); return; }
+    sweeping = requestAnimationFrame(step);
   };
-  sweeping = requestAnimationFrame(tick);
+  sweeping = requestAnimationFrame(step);
 }
 
 function endSweep() {
-  if (sweeping) { cancelAnimationFrame(sweeping); sweeping = null; }
-  const btn = document.getElementById("rulSweep");
-  if (btn) { btn.classList.remove("on"); btn.textContent = "sweep the full stack"; }
-}
-
-function stops() {
-  const host = document.getElementById("rulStops");
-  if (!host) return;
-  host.innerHTML = (D.stops || []).map(st => {
-    const targetObj = objects.find(o => o.id === st.id);
-    const zVal = targetObj ? targetObj.lg : (st.z || 0);
-    return `<button class="rul__stop" data-z="${zVal}"><b>${esc(st.label || st.name)}</b><span>${esc(st.sub)}</span></button>`;
-  }).join("");
-
-  host.querySelectorAll(".rul__stop").forEach(b =>
-    b.addEventListener("click", () => jump(+b.dataset.z)));
-}
-
-function size() {
-  if (!svg) return;
-  const r = svg.getBoundingClientRect();
-  W = Math.max(360, r.width || 1200);
-  H = Math.max(380, r.height || 560);
-  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  paint();
+  if (!sweeping) return;
+  cancelAnimationFrame(sweeping);
+  sweeping = null;
+  const b = document.getElementById("rulPlay");
+  if (b) b.textContent = SWEEP_LABEL;
 }
 
 export async function initRuler() {
   const r = await fetch(new URL("../../data/static/ruler.json", import.meta.url));
+  if (!r.ok) throw new Error(`Could not load ruler.json (${r.status})`);
   D = await r.json();
+
+  objects = D.objects
+    .map(o => ({ ...o, lg: Math.log10(o.m) }))
+    .sort((a, b) => a.lg - b.lg)
+    .map((o, i) => {
+      const cycle = (LANES - 1) * 2;
+      const pos = i % cycle;
+      const track = pos < LANES ? pos : cycle - pos;
+      const st = app.byId[o.station];
+      const col = st ? app.col(st.L) : "var(--pls)";
+      return {
+        ...o,
+        lane: track,
+        svg: drawGlyph(o.glyph, col, o.sub)
+      };
+    });
+
+  z = target = objects[0]?.lg + 0.6 || -9.3;
 
   svg = document.getElementById("rulSvg");
   stage = svg.parentElement;
@@ -268,67 +269,86 @@ export async function initRuler() {
   svg.appendChild(gWorld);
   svg.appendChild(gAxis);
 
-  objects = (D.objects || []).slice().sort((a, b) => a.m - b.m).map((o, i) => {
-    const cycle = (LANES - 1) * 2;
-    const pos = i % cycle;
-    const track = pos < LANES ? pos : cycle - pos;
-    const st = app.byId[o.station];
-    const col = st ? app.col(st.L) : "var(--pls)";
-    return {
-      ...o,
-      lg: Math.log10(o.m),
-      lane: track,
-      svg: drawGlyph(o.glyph, col, o.sub)
-    };
-  });
-
-  stops();
-
-  svg.addEventListener("wheel", e => {
-    e.preventDefault();
-    endSweep();
-    const dz = (e.deltaX + e.deltaY) * 0.0016;
-    jump(z + dz);
-  }, { passive: false });
-
-  svg.addEventListener("pointerdown", e => {
-    dragging = { x: e.clientX, z };
-    svg.setPointerCapture(e.pointerId);
-    svg.classList.add("drag");
-  });
-  svg.addEventListener("pointermove", e => {
-    if (!dragging) return;
-    const dx = e.clientX - dragging.x;
-    jump(dragging.z - dx / PX_DECADE);
-  });
-  const stop = () => { dragging = null; svg.classList.remove("drag"); };
-  svg.addEventListener("pointerup", stop);
-  svg.addEventListener("pointercancel", stop);
+  const stops = [
+    ["Lattice", -9.3], ["Litho", -8.5], ["Metrology", -6.2], ["Gearing", -5.3],
+    ["Actuator", -1.2], ["Humanoid", 0.23], ["Cleanroom", 2.5], ["Mine", 4.1], ["Earth", 7.1]
+  ];
+  const stopsHost = document.getElementById("rulStops");
+  if (stopsHost) {
+    stopsHost.innerHTML = stops
+      .map(([l, v]) => `<button data-z="${v}">${l}</button>`).join("");
+    stopsHost.querySelectorAll("button").forEach(b =>
+      b.addEventListener("click", () => jump(+b.dataset.z)));
+  }
 
   const range = document.getElementById("rulRange");
   if (range) {
     range.min = String(D.meta.span[0]);
     range.max = String(D.meta.span[1]);
     range.step = "0.01";
-    range.addEventListener("input", () => jump(+range.value));
+    range.addEventListener("input", () => {
+      endSweep();
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+      z = target = +range.value;
+      paint();
+    });
   }
 
-  document.getElementById("rulSweep")?.addEventListener("click", sweep);
+  /* Wheel listener on stage with non-passive preventDefault so the page doesn't scroll when scrolling inside the box */
+  stage.addEventListener("wheel", e => {
+    e.preventDefault();
+    const d = (Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX);
+    endSweep();
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    z = target = clamp(z + d * WHEEL_PX / PX_DECADE);
+    paint();
+  }, { passive: false });
+
+  stage.addEventListener("pointerdown", e => {
+    dragging = { x: e.clientX, z };
+    stage.setPointerCapture(e.pointerId);
+    stage.classList.add("drag");
+  });
+  stage.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    endSweep();
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    z = target = clamp(dragging.z - (e.clientX - dragging.x) / PX_DECADE);
+    paint();
+  });
+  const stop = () => { dragging = null; stage.classList.remove("drag"); };
+  stage.addEventListener("pointerup", stop);
+  stage.addEventListener("pointercancel", stop);
+
+  const playBtn = document.getElementById("rulPlay");
+  if (playBtn) playBtn.addEventListener("click", sweep);
 
   addEventListener("keydown", e => {
     if (!document.getElementById("v-rul").classList.contains("on")) return;
     if (e.target.tagName === "INPUT") return;
-    if (e.key === "ArrowRight") { jump(z + 0.25); e.preventDefault(); }
-    if (e.key === "ArrowLeft") { jump(z - 0.25); e.preventDefault(); }
+    if (e.key === "ArrowRight") { jump(target + 0.5); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { jump(target - 0.5); e.preventDefault(); }
   });
 
   addEventListener("resize", () => {
     if (document.getElementById("v-rul").classList.contains("on")) size();
   });
 
-  app.rulerGoTo = id => focus(id);
+  const pxDecadeEl = document.getElementById("rulPxDecade");
+  if (pxDecadeEl) pxDecadeEl.textContent = PX_DECADE;
+
+  app.rulerGoTo = focus;
   app.rulerFit = size;
 
   size();
-  focus(objects[0]?.id || "ndfeb-lattice");
+}
+
+function size() {
+  if (!svg) return;
+  const r = svg.getBoundingClientRect();
+  W = Math.max(360, r.width || 1200);
+  H = Math.max(380, r.height || 560);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  shown = null;
+  paint();
 }
