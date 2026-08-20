@@ -82,7 +82,7 @@ atLeast("graph edges rendered", D.querySelectorAll(".edge").length, 300);
 atLeast("table rows rendered", D.querySelectorAll("#tb tr").length, 100);
 
 /* ruler */
-atLeast("ruler objects rendered", D.querySelectorAll(".rul__obj").length, 3);
+atLeast("ruler objects rendered", D.querySelectorAll(".rul__o").length, 3);
 is("ruler fit handler registered", typeof app.rulerFit, "function");
 is("ruler goTo handler registered", typeof app.rulerGoTo, "function");
 

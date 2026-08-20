@@ -121,7 +121,8 @@ ok.push(`${N.length} against-the-grain findings`);
 const R = read("ruler.json");
 if (!R.objects || R.objects.length < 25) problems.push("ruler.json needs at least 25 objects");
 R.objects.forEach(o => {
-  if (typeof o.size !== "number" || o.size <= 0) problems.push(`ruler object ${o.id} has invalid size`);
+  const sizeVal = o.m ?? o.size;
+  if (typeof sizeVal !== "number" || sizeVal <= 0) problems.push(`ruler object ${o.id} has invalid size`);
   if (o.station && !ids.has(o.station)) problems.push(`ruler object ${o.id} references unknown station "${o.station}"`);
 });
 ok.push(`${R.objects.length} ruler scale objects`);

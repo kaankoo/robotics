@@ -1,411 +1,347 @@
 {
   "meta": {
-    "span": [-9.5, 7.2],
-    "stops": [
-      { "id": "lattice", "name": "NdFeB unit cell", "z": -9.1 },
-      { "id": "tooth-error", "name": "Harmonic tooth error", "z": -5.3 },
-      { "id": "hand", "name": "Dexterous hand", "z": -0.8 },
-      { "id": "humanoid", "name": "Humanoid & cell", "z": 0.3 },
-      { "id": "bayan-obo", "name": "Bayan Obo pit", "z": 4.1 },
-      { "id": "earth", "name": "Earth footprint", "z": 7.1 }
-    ]
+    "updated": "2026-08-18",
+    "span": [-10.4, 7.3],
+    "note": "Sizes in metres. Everything is drawn to true relative scale — if one object looks a hundred times bigger than another, it is. `precision` says how much to trust each figure: exact means defined or measured, typical means a representative production value, approx means the right order of magnitude."
   },
+  "stops": [
+    { "id": "ndfeb-lattice", "label": "NdFeB unit cell", "sub": "unit cell spacing" },
+    { "id": "strainwave-tooth-error", "label": "Harmonic tooth error", "sub": "5 µm profile accuracy" },
+    { "id": "hand-span", "label": "Dexterous hand", "sub": "160 mm palm span" },
+    { "id": "humanoid-height", "label": "Humanoid & cell", "sub": "1.7 m standing height" },
+    { "id": "bayan-obo-pit", "label": "Bayan Obo pit", "sub": "12 km open pit mine" },
+    { "id": "earth-diameter", "label": "Earth footprint", "sub": "12,742 km logistics" }
+  ],
   "objects": [
     {
       "id": "ndfeb-lattice",
-      "name": "Nd₂Fe₁₄B unit cell",
-      "size": 8.4e-10,
+      "m": 8.4e-10,
       "glyph": "lattice",
-      "color": "var(--ndfeb)",
+      "label": "Nd₂Fe₁₄B unit cell",
+      "sub": "less than a nanometre across",
       "station": "ndfeb",
-      "stratum": 2,
       "precision": "exact",
-      "detail": "Tetragonal unit cell of sintered neodymium magnet",
-      "note": "Crystal lattice spacing governing magnetic remanence Br and saturation magnetization."
+      "note": "0.84 nanometres, the tetragonal unit cell of sintered neodymium permanent magnets. Governs magnetic remanence Br and saturation magnetization for every joint motor in the stack."
     },
     {
       "id": "gate-pitch",
-      "name": "Transistor gate pitch",
-      "size": 3.0e-9,
+      "m": 3.0e-9,
       "glyph": "pitch",
-      "color": "var(--silicon)",
+      "label": "Transistor gate pitch",
+      "sub": "contacted gate pitch in Edge NPU",
       "station": "edgesoc",
-      "stratum": 11,
       "precision": "exact",
-      "detail": "FinFET / GAAFET contact gate pitch in Edge AI SoC",
-      "note": "Physical lithographic gate pitch in 3nm edge inferencing processors."
+      "note": "Physical lithographic contacted gate pitch in 3nm embedded edge AI neural accelerators executing onboard action-chunking policies."
     },
     {
       "id": "domain-wall",
-      "name": "Magnetic domain wall",
-      "size": 5.0e-9,
+      "m": 5.0e-9,
       "glyph": "layers",
-      "color": "var(--ndfeb)",
+      "label": "Magnetic domain wall",
+      "sub": "grain boundary pinning layer",
       "station": "ndfeb",
-      "stratum": 2,
       "precision": "typical",
-      "detail": "Grain boundary Dy/Tb diffusion pinning layer",
-      "note": "Dysprosium atom substitution thickness along NdFeB crystal grain boundaries."
+      "note": "Dysprosium and terbium diffusion thickness along NdFeB crystal grain boundaries to prevent demagnetization at high motor stator temperatures."
     },
     {
       "id": "oxide-film",
-      "name": "Passive oxide film",
-      "size": 2.0e-8,
+      "m": 2.0e-8,
       "glyph": "layers",
-      "color": "var(--steels)",
+      "label": "Passive oxide film",
+      "sub": "passivated raceway layer",
       "station": "steels",
-      "stratum": 2,
       "precision": "typical",
-      "detail": "Protective boundary layer on 100Cr6 bearing steel",
-      "note": "Micro-thin passivated oxide layer preventing corrosion on raceway surfaces."
+      "note": "Micro-thin passivated oxide layer on vacuum-degassed 100Cr6 bearing steel protecting raceways from micro-fretting and corrosion."
     },
     {
       "id": "raceway-roughness",
-      "name": "Raceway surface roughness",
-      "size": 5.0e-8,
+      "m": 5.0e-8,
       "glyph": "wave",
-      "color": "var(--grind)",
+      "label": "Raceway surface roughness",
+      "sub": "Ra < 0.05 µm superfinish",
       "station": "grind",
-      "stratum": 4,
       "precision": "exact",
-      "detail": "Superfinished bearing raceway roughness Ra < 0.05 µm",
-      "note": "Surface finish achieved on crossed-roller bearing raceways to eliminate torque ripple."
+      "note": "Surface finish achieved on crossed-roller bearing raceways to eliminate friction cogging and torque ripple in precision harmonic joints."
     },
     {
       "id": "interferometer-wave",
-      "name": "Laser tracker wavelength",
-      "size": 6.33e-7,
+      "m": 6.33e-7,
       "glyph": "wave",
-      "color": "var(--metrol)",
+      "label": "Laser tracker wavelength",
+      "sub": "632.8 nm HeNe reference",
       "station": "calib",
-      "stratum": 14,
       "precision": "exact",
-      "detail": "HeNe laser wavelength (632.8 nm) on kinematic calibration tracker",
-      "note": "Optical optical reference wavelength for sub-micron robot volumetric pose calibration."
+      "note": "Helium-neon laser reference wavelength used by 6-DOF optical coordinate trackers for sub-micron robot volumetric pose calibration."
     },
     {
       "id": "encoder-slit",
-      "name": "Encoder grating slit",
-      "size": 2.0e-6,
+      "m": 2.0e-6,
       "glyph": "pitch",
-      "color": "var(--encoders)",
+      "label": "Encoder grating slit",
+      "sub": "24-bit absolute code disc pitch",
       "station": "encoders",
-      "stratum": 9,
       "precision": "exact",
-      "detail": "Chrome grating pitch on 24-bit optical absolute code disc",
-      "note": "Etched chromium grating line width read by photodiode arrays."
+      "note": "Vacuum-sputtered chromium optical grating line width read by differential photodiode arrays to resolve 16 million counts per revolution."
     },
     {
       "id": "strainwave-tooth-error",
-      "name": "Harmonic tooth profile error",
-      "size": 5.0e-6,
+      "m": 5.0e-6,
       "glyph": "gear",
-      "color": "var(--strainwave)",
+      "label": "Harmonic tooth profile error",
+      "sub": "sub-5 µm flexspline profile accuracy",
       "station": "strainwave",
-      "stratum": 6,
       "precision": "exact",
-      "detail": "Flexspline tooth form tolerance (<5 µm) across 200+ teeth",
-      "note": "Crucial mechanical cross-check: the micro-error limit that guarantees zero backlash."
+      "note": "The deepest mechanical moat in robotics: tooth form error held under 5 micrometres across 200+ teeth to guarantee <1 arc-min backlash."
     },
     {
       "id": "cmm-uncertainty",
-      "name": "CMM volumetric uncertainty",
-      "size": 8.0e-6,
+      "m": 8.0e-6,
       "glyph": "via",
-      "color": "var(--metrol)",
+      "label": "CMM volumetric uncertainty",
+      "sub": "ISO 10360 coordinate error",
       "station": "metrol",
-      "stratum": 4,
       "precision": "exact",
-      "detail": "ISO 10360 length measurement error on bridge coordinate machine",
-      "note": "Accuracy envelope when verifying machined robot arm joint housing bearing seats."
+      "note": "Measurement uncertainty envelope when verifying machined robot arm joint housing bearing seats and cycloidal pin circles."
     },
     {
       "id": "bearing-runout",
-      "name": "Bearing radial runout",
-      "size": 1.2e-5,
+      "m": 1.2e-5,
       "glyph": "bearing",
-      "color": "var(--xroller)",
+      "label": "Bearing radial runout",
+      "sub": "P4 grade crossed-roller wobble",
       "station": "xroller",
-      "stratum": 5,
       "precision": "typical",
-      "detail": "P4 grade crossed-roller bearing radial and axial runout",
-      "note": "Maximum allowable angular wobble on joint output pivot rings."
+      "note": "Maximum allowable radial and axial runout on joint output crossed-roller bearing rings under high overturning moment load."
     },
     {
       "id": "tactile-spatial-res",
-      "name": "GelSight tactile resolution",
-      "size": 4.0e-5,
+      "m": 4.0e-5,
       "glyph": "dot",
-      "color": "var(--tactile)",
+      "label": "Tactile skin resolution",
+      "sub": "optical elastomeric sensor pitch",
       "station": "tactile",
-      "stratum": 10,
       "precision": "typical",
-      "detail": "Spatial contact resolution on elastomeric fingertip skin",
-      "note": "Micro-feature detection threshold allowing robots to feel Braille and texture."
+      "note": "Spatial contact resolution on GelSight elastomeric robot fingertip skin, allowing physical AI models to resolve fine texture and slip."
     },
     {
       "id": "lamination-thickness",
-      "name": "Stator lamination sheet",
-      "size": 1.5e-4,
+      "m": 1.5e-4,
       "glyph": "layers",
-      "color": "var(--windings)",
+      "label": "Stator lamination sheet",
+      "sub": "0.15 mm silicon steel sheet",
       "station": "windings",
-      "stratum": 7,
       "precision": "exact",
-      "detail": "Silicon steel sheet thickness suppressing eddy current losses",
-      "note": "Ultra-thin electrical steel sheets stacked to build high-frequency motor stators."
+      "note": "Ultra-thin high-silicon electrical steel sheets laser-cut and stacked to build low-eddy-current motor stators operating up to 1 kHz electrical frequency."
     },
     {
       "id": "flexspline-wall",
-      "name": "Flexspline cup wall",
-      "size": 4.5e-4,
+      "m": 4.5e-4,
       "glyph": "layers",
-      "color": "var(--strainwave)",
+      "label": "Flexspline cup wall",
+      "sub": "0.45 mm elastic steel section",
       "station": "strainwave",
-      "stratum": 6,
       "precision": "typical",
-      "detail": "Elastic steel cup wall thickness in 100:1 strain-wave gear",
-      "note": "Thin structural steel section engineered to flex elastically for millions of cycles."
+      "note": "Thin-walled elastic alloy steel cup section engineered to deform continuously into an ellipse for tens of millions of cycles without fatigue failure."
     },
     {
       "id": "copper-wire-dia",
-      "name": "Magnet wire conductor",
-      "size": 6.5e-4,
+      "m": 6.5e-4,
       "glyph": "dot",
-      "color": "var(--cu)",
+      "label": "Magnet wire conductor",
+      "sub": "Grade 220°C enamelled wire",
       "station": "windings",
-      "stratum": 7,
       "precision": "typical",
-      "detail": "Heavy-build enamelled copper magnet wire in concentrated stator tooth",
-      "note": "High-purity Grade 220 °C insulated wire carrying 30A peak phase current."
+      "note": "High-purity electrolytic copper magnet wire wound with >85% slot fill factor to maximize joint motor torque density."
     },
     {
       "id": "finger-tendon",
-      "name": "UHMWPE hand tendon",
-      "size": 1.8e-3,
+      "m": 1.8e-3,
       "glyph": "line",
-      "color": "var(--tendon)",
+      "label": "UHMWPE hand tendon",
+      "sub": "braided Dyneema cable",
       "station": "tendon",
-      "stratum": 6,
       "precision": "typical",
-      "detail": "Braided synthetic Dyneema/Spectra tendon cable diameter",
-      "note": "Ultra-high-strength cable transmitting actuation force to dexterous finger joints."
+      "note": "High-strength synthetic tendon cable transmitting actuation force from forearm spool actuators to dexterous robotic finger joints."
     },
     {
       "id": "roller-screw-pitch",
-      "name": "Roller screw lead pitch",
-      "size": 4.0e-3,
+      "m": 4.0e-3,
       "glyph": "pitch",
-      "color": "var(--ballscrew)",
+      "label": "Roller screw lead pitch",
+      "sub": "planetary roller screw lead",
       "station": "ballscrew",
-      "stratum": 5,
       "precision": "exact",
-      "detail": "Lead pitch of planetary roller screw in humanoid knee actuator",
-      "note": "Translates high-speed motor rotation into 8,000 N linear knee thrust."
+      "note": "Translates high-speed frameless motor rotation into 8,000 N linear thrust in humanoid knee and ankle actuators."
     },
     {
       "id": "harmonic-gear-depth",
-      "name": "Harmonic drive pancake depth",
-      "size": 2.2e-2,
+      "m": 2.2e-2,
       "glyph": "rect",
-      "color": "var(--strainwave)",
+      "label": "Harmonic drive axial depth",
+      "sub": "CSD-20 pancake reducer",
       "station": "strainwave",
-      "stratum": 6,
       "precision": "exact",
-      "detail": "Total axial width of 100:1 strain-wave gear set (CSD-20)",
-      "note": "Ultra-thin mechanical reducer packaging standard in cobots and humanoids."
+      "note": "Ultra-thin 22 mm axial width for a complete 100:1 strain-wave gear set, enabling compact robotic joint packaging."
     },
     {
       "id": "actuator-dia",
-      "name": "Joint actuator diameter",
-      "size": 6.5e-2,
+      "m": 6.5e-2,
       "glyph": "bearing",
-      "color": "var(--jointmod)",
+      "label": "Joint actuator diameter",
+      "sub": "integrated smart actuator module",
       "station": "jointmod",
-      "stratum": 8,
       "precision": "typical",
-      "detail": "Integrated smart joint module outer diameter",
-      "note": "Contains motor, gear, brake, dual encoders, and driver in a single cylinder."
+      "note": "Outer diameter of an integrated joint containing frameless motor, strain-wave reducer, dual encoders, power stage, and thermal sensors."
     },
     {
       "id": "hand-span",
-      "name": "Dexterous hand span",
-      "size": 1.6e-1,
+      "m": 1.6e-1,
       "glyph": "hand",
-      "color": "var(--hand)",
+      "label": "Dexterous hand span",
+      "sub": "5-finger anthropomorphic palm",
       "station": "hand",
-      "stratum": 13,
       "precision": "typical",
-      "detail": "Anthropomorphic 5-finger robot hand palm and finger envelope",
-      "note": "Crucial manipulation moment: matching the grasp geometry of an adult human."
+      "note": "Matching the 160 mm grasp envelope of an adult human hand so robotic end-effectors can operate standard tools and packaging."
     },
     {
       "id": "arm-link",
-      "name": "Limb casting link",
-      "size": 4.2e-1,
+      "m": 4.2e-1,
       "glyph": "rect",
-      "color": "var(--links)",
+      "label": "Forearm casting link",
+      "sub": "topology-optimised alloy link",
       "station": "links",
-      "stratum": 13,
       "precision": "typical",
-      "detail": "Bionic topology-optimized aluminium forearm structural link",
-      "note": "Cast structural member spanning elbow to wrist joint pivots."
+      "note": "High-stiffness cast aluminium structural member connecting elbow and wrist pivot axes with internal routing channels."
     },
     {
       "id": "amr-chassis",
-      "name": "AMR mobile base",
-      "size": 1.2e0,
+      "m": 1.2e0,
       "glyph": "rect",
-      "color": "var(--intralog)",
+      "label": "AMR mobile base",
+      "sub": "autonomous pallet base wheelbase",
       "station": "intralog",
-      "stratum": 24,
       "precision": "typical",
-      "detail": "Industrial autonomous mobile robot chassis wheelbase",
-      "note": "Footprint of warehouse pallet-carrying autonomous mobile robots."
+      "note": "Industrial autonomous mobile robot chassis wheelbase engineered to carry 1,500 kg payloads across warehouse floors."
     },
     {
       "id": "humanoid-height",
-      "name": "Humanoid robot height",
-      "size": 1.7e0,
+      "m": 1.7e0,
       "glyph": "person",
-      "color": "var(--cm)",
+      "label": "Humanoid robot height",
+      "sub": "standing bipedal robot height",
       "station": "cm",
-      "stratum": 14,
       "precision": "typical",
-      "detail": "Full standing height of bipedal humanoid (Figure 02 / Optimus)",
-      "note": "Designed to operate in human-sized stairways, aisles, and workstations."
+      "note": "1.70 metres tall to operate seamlessly within human-designed factory workstations, stairs, and narrow warehouse aisles."
     },
     {
       "id": "reach-envelope",
-      "name": "Articulated arm reach",
-      "size": 2.8e0,
+      "m": 2.8e0,
       "glyph": "circle",
-      "color": "var(--weld)",
+      "label": "Articulated arm reach",
+      "sub": "heavy spot-welding arm sphere",
       "station": "weld",
-      "stratum": 24,
       "precision": "exact",
-      "detail": "Heavy industrial spot-welding robot working sphere radius",
-      "note": "Spherical operational envelope of 200 kg payload automotive manufacturing arms."
+      "note": "Spherical operational work envelope of a 200 kg payload 6-axis automotive manufacturing manipulator."
     },
     {
       "id": "workcell-envelope",
-      "name": "Robotic workcell enclosure",
-      "size": 8.0e0,
+      "m": 8.0e0,
       "glyph": "rect",
-      "color": "var(--perimeter)",
+      "label": "Robotic workcell enclosure",
+      "sub": "safety light curtain perimeter",
       "station": "perimeter",
-      "stratum": 25,
       "precision": "typical",
-      "detail": "Safety light curtain perimeter surrounding automated robot cell",
-      "note": "Guarded zone protected by optical safety barriers and interlocks."
+      "note": "Physical and optical safety perimeter surrounding automated robot cells with interlocked fencing and LiDAR muting."
     },
     {
       "id": "warehouse-aisle",
-      "name": "Logistics racking aisle",
-      "size": 4.5e1,
+      "m": 4.5e1,
       "glyph": "rect",
-      "color": "var(--fleetops)",
+      "label": "Logistics racking aisle",
+      "sub": "automated high-bay storage aisle",
       "station": "fleetops",
-      "stratum": 23,
       "precision": "typical",
-      "detail": "Automated warehouse high-bay storage aisle length",
-      "note": "Operational channel navigated by fleet-dispatched autonomous mobile robots."
+      "note": "Standard racking corridor navigated by multi-agent mobile robots under centralized traffic dispatch."
     },
     {
       "id": "gigafactory-floor",
-      "name": "Robot manufacturing hall",
-      "size": 3.5e2,
+      "m": 3.5e2,
       "glyph": "building",
-      "color": "var(--cm)",
+      "label": "Robot assembly cleanroom",
+      "sub": "contract manufacturing hall length",
       "station": "cm",
-      "stratum": 14,
       "precision": "typical",
-      "detail": "Tier-1 contract manufacturing cleanroom assembly hall length",
-      "note": "High-volume SMT, joint assembly, and burn-in testing facility envelope."
+      "note": "Cleanroom assembly and burn-in testing facility envelope producing tens of thousands of actuator modules annually."
     },
     {
       "id": "fulfillment-center",
-      "name": "Automated distribution center",
-      "size": 8.0e2,
+      "m": 8.0e2,
       "glyph": "building",
-      "color": "var(--pickpack)",
+      "label": "Automated distribution center",
+      "sub": "million-sq-ft logistics hub",
       "station": "pickpack",
-      "stratum": 24,
       "precision": "typical",
-      "detail": "Million-square-foot automated e-commerce fulfillment center",
-      "note": "Operates 500+ piece-picking arms, palletizers, and mobile robots simultaneously."
+      "note": "Massive e-commerce logistics facility coordinating hundreds of robotic arms and mobile units in synchronized fulfillment."
     },
     {
       "id": "industrial-cluster",
-      "name": "Hotaka precision gear cluster",
-      "size": 3.5e3,
+      "m": 3.5e3,
       "glyph": "circle",
-      "color": "var(--strainwave)",
+      "label": "Hotaka precision gear cluster",
+      "sub": "Azumino, Nagano manufacturing site",
       "station": "strainwave",
-      "stratum": 6,
       "precision": "area",
-      "detail": "Harmonic Drive Systems manufacturing complex in Azumino, Nagano",
-      "note": "Geographic cluster producing ~70% of global precision strain-wave reducers."
+      "note": "Geographic concentration producing ~70% of the world's precision strain-wave gearing for robotics and aerospace."
     },
     {
       "id": "bayan-obo-pit",
-      "name": "Bayan Obo rare earth pit",
-      "size": 1.2e4,
+      "m": 1.2e4,
       "glyph": "circle",
-      "color": "var(--ndpr)",
+      "label": "Bayan Obo rare earth pit",
+      "sub": "open pit mining basin",
       "station": "ndpr",
-      "stratum": 1,
       "precision": "area",
-      "detail": "World's largest light rare earth deposit open pit mining basin",
-      "note": "Primary geological source of Neodymium and Praseodymium for robot magnets."
+      "note": "The world's largest light rare earth deposit, providing Neodymium and Praseodymium ore for permanent magnet motors."
     },
     {
       "id": "baotou-refinery-zone",
-      "name": "Baotou rare earth refinery zone",
-      "size": 4.5e4,
+      "m": 4.5e4,
       "glyph": "circle",
-      "color": "var(--heavyre)",
+      "label": "Baotou rare earth refinery zone",
+      "sub": "metallurgical separation zone",
       "station": "heavyre",
-      "stratum": 1,
       "precision": "area",
-      "detail": "Solvent extraction and reduction metallurgical zone in Inner Mongolia",
-      "note": "Refining zone processing ~70% of global rare earth permanent magnet feedstock."
+      "note": "Solvent extraction and molten-salt reduction complex in Inner Mongolia refining ~70% of global rare earth magnet feedstock."
     },
     {
       "id": "regional-hub",
-      "name": "Chubu robotics supplier corridor",
-      "size": 2.5e5,
+      "m": 2.5e5,
       "glyph": "circle",
-      "color": "var(--servo)",
+      "label": "Chubu robotics supplier corridor",
+      "sub": "Nagoya-Tokyo industrial corridor",
       "station": "servo",
-      "stratum": 7,
       "precision": "area",
-      "detail": "Nagoya-Tokyo industrial corridor (Fanuc, Yaskawa, Nabtesco, THK)",
-      "note": "Concentrated industrial geography anchoring global precision robotics hardware."
+      "note": "Dense industrial cluster housing Fanuc, Yaskawa, Nabtesco, and Harmonic Drive Systems."
     },
     {
       "id": "shipping-lane",
-      "name": "Trans-Pacific freight corridor",
-      "size": 8.5e6,
+      "m": 8.5e6,
       "glyph": "line",
-      "color": "var(--exportctl)",
+      "label": "Trans-Pacific freight corridor",
+      "sub": "Shanghai to Los Angeles container route",
       "station": "exportctl",
-      "stratum": 26,
       "precision": "approx",
-      "detail": "Maritime container freight route from Shanghai to Los Angeles",
-      "note": "Global logistics artery moving components and assembled robots across continents."
+      "note": "Global maritime shipping corridor transporting component sub-assemblies and finished robots across the Pacific."
     },
     {
       "id": "earth-diameter",
-      "name": "Earth planetary footprint",
-      "size": 1.2742e7,
+      "m": 1.2742e7,
       "glyph": "circle",
-      "color": "var(--lithosphere)",
+      "label": "Earth planetary footprint",
+      "sub": "planetary logistics diameter",
       "station": "ndpr",
-      "stratum": 1,
       "precision": "exact",
-      "detail": "Planetary diameter enclosing the full physical-intelligence stack",
-      "note": "From rare earth ore in the crust to autonomous physical work across the globe."
+      "note": "12,742 kilometres enclosing the entire planetary physical-intelligence stack from lithosphere mines to end-customer workcells."
     }
   ]
 }

@@ -1,5 +1,5 @@
 /* ============================================================
-   RULER — sixteen orders of magnitude, drawn to true scale.
+   RULER — seventeen orders of magnitude, drawn to true scale.
    ============================================================ */
 
 import { app } from "../core/app.js";
@@ -7,16 +7,17 @@ import { drawGlyph } from "../lib/glyphs.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
-const PX_DECADE = 560;
-const REF = 130;
-const MIN_PX = 1.1;
+const PX_DECADE = 560;   // horizontal pixels per power of ten
+const REF = 130;         // pixels an object measures when centred
+const MIN_PX = 1.1;      // below this it is not worth drawing
 const MAX_PX = 1000;
 
 const LANES = 5;
-const SPREAD = 0.88;
-const SETTLE = 1.9;
-const WHEEL_PX = 0.48;
+const SPREAD = 0.88;     // share of the stage the tracks span
+const SETTLE = 1.9;      // stage-heights at which a shape is fully recentred
+const WHEEL_PX = 0.48;   // pixels of travel per wheel unit
 
+/* SI ladder for the readout */
 const SI = [
   [-12, "pm"], [-9, "nm"], [-6, "µm"], [-3, "mm"], [0, "m"], [3, "km"], [6, "Mm"]
 ];
@@ -26,6 +27,8 @@ let z = -5.3, target = -5.3, raf = null, dragging = null;
 let objects = [];
 let W = 1200, H = 560;
 let sweeping = null;
+
+/* ---------- formatting ---------- */
 
 export function metres(v) {
   const e = Math.floor(Math.log10(Math.abs(v)));
@@ -43,6 +46,8 @@ function decadeLabel(e) {
   const n = Math.pow(10, e - exp);
   return `${n >= 1000 ? n.toExponential(0) : n} ${unit}`;
 }
+
+/* ---------- camera ---------- */
 
 const clamp = v => Math.max(D.meta.span[0], Math.min(D.meta.span[1], v));
 
@@ -88,6 +93,8 @@ export function place(o, zNow = z) {
 }
 
 function paint() {
+  if (!gAxis || !gWorld) return;
+
   /* --- axis --- */
   let ax = "";
   const from = Math.ceil(z - W / 2 / PX_DECADE), to = Math.floor(z + W / 2 / PX_DECADE);
@@ -127,7 +134,8 @@ function paint() {
     const half = Math.max(p.px, 6) / 2;
     const named = p.px > 26;
     if ((named || p.px > 5) && p.x > 24 && p.x < W - 24) {
-      const w = (named ? o.name.length * 6.6 : metres(o.size).length * 6) / 2 + 6;
+      const labelText = o.label || o.name || "";
+      const w = (named ? labelText.length * 6.6 : metres(o.m).length * 6) / 2 + 6;
       const x0 = p.x - w, x1 = p.x + w;
       const rungs = named
         ? [-half - 15, half + 27, -half - 39, half + 51, -half + 26, half - 14]
@@ -140,11 +148,11 @@ function paint() {
 
       out += named
         ? (under
-          ? `<text class="rul__m" x="0" y="${y - 13}" text-anchor="middle">${metres(o.size)}</text>
-             <text class="rul__n" x="0" y="${y}" text-anchor="middle">${esc(o.name)}</text>`
-          : `<text class="rul__n" x="0" y="${y}" text-anchor="middle">${esc(o.name)}</text>
-             <text class="rul__m" x="0" y="${y + 12}" text-anchor="middle">${metres(o.size)}</text>`)
-        : `<text class="rul__m" x="0" y="${y}" text-anchor="middle">${metres(o.size)}</text>`;
+          ? `<text class="rul__m" x="0" y="${y - 13}" text-anchor="middle">${metres(o.m)}</text>
+             <text class="rul__n" x="0" y="${y}" text-anchor="middle">${esc(labelText)}</text>`
+          : `<text class="rul__n" x="0" y="${y}" text-anchor="middle">${esc(labelText)}</text>
+             <text class="rul__m" x="0" y="${y + 12}" text-anchor="middle">${metres(o.m)}</text>`)
+        : `<text class="rul__m" x="0" y="${y}" text-anchor="middle">${metres(o.m)}</text>`;
     }
     out += `</g>`;
   }
@@ -153,13 +161,15 @@ function paint() {
   gWorld.querySelectorAll(".rul__o").forEach(g =>
     g.addEventListener("click", () => focus(g.dataset.id)));
 
-  document.getElementById("rulScale").textContent = metres(Math.pow(10, z));
-  document.getElementById("rulRange").value = String(z);
+  const scaleEl = document.getElementById("rulScale");
+  if (scaleEl) scaleEl.textContent = metres(Math.pow(10, z));
+  const rangeEl = document.getElementById("rulRange");
+  if (rangeEl) rangeEl.value = String(z);
   if (focal) detail(focal);
 }
 
 const x2 = v => Math.round(v * 100) / 100;
-const esc = s => (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const esc = s => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
 /* ---------- detail panel ---------- */
 
@@ -174,17 +184,21 @@ function detail(o) {
   const precision = {
     exact: "defined physical quantity or standard",
     typical: "representative production value",
-    approx: "order of magnitude"
+    approx: "order of magnitude",
+    area: "geographic district or facility envelope"
   };
+
+  const labelText = o.label || o.name || "";
+  const descText = o.note || o.desc || o.sub || "";
 
   document.getElementById("rulPanel").innerHTML = `
     <div class="atl__pk">
       <span>10<sup>${o.lg.toFixed(1)}</sup> m</span>
-      <b class="atl__prec atl__prec--${o.precision}" title="${esc(precision[o.precision] || "")}">${o.precision}</b>
+      <b class="atl__prec atl__prec--${o.precision || "typical"}" title="${esc(precision[o.precision] || "")}">${o.precision || "typical"}</b>
     </div>
-    <h3 class="atl__pn">${esc(o.name)}</h3>
-    <p class="atl__ps">${metres(o.size)}</p>
-    <p class="atl__pb">${esc(o.desc || o.why || "")}</p>
+    <h3 class="atl__pn">${esc(labelText)}</h3>
+    <p class="atl__ps">${metres(o.m)} · ${esc(o.sub || "")}</p>
+    <p class="atl__pb">${esc(descText)}</p>
     ${o.source ? `<p class="cas__cite">${o.source.url
       ? `<a href="${o.source.url}" target="_blank" rel="noopener">${esc(o.source.who)} — ${esc(o.source.what || "")} ↗</a>`
       : `${esc(o.source.who)} — ${esc(o.source.what || "")}`}</p>` : ""}
@@ -198,38 +212,39 @@ function detail(o) {
 function sweep() {
   if (sweeping) { endSweep(); return; }
   jump(D.meta.span[0]);
-  const btn = document.getElementById("rulPlay");
-  if (btn) btn.textContent = "Pause";
+  const btn = document.getElementById("rulSweep");
+  if (btn) { btn.classList.add("on"); btn.textContent = "pause"; }
   const start = performance.now();
-  const span = D.meta.span[1] - D.meta.span[0];
-  const dur = app.RM ? 2000 : 18000;
-
-  const frame = now => {
-    const t = Math.min(1, (now - start) / dur);
-    z = target = D.meta.span[0] + t * span;
+  const dur = app.RM ? 4000 : 28000;
+  const from = D.meta.span[0], span = D.meta.span[1] - from;
+  const tick = now => {
+    const u = Math.min(1, (now - start) / dur);
+    z = from + span * u;
+    target = z;
     paint();
-    if (t < 1) sweeping = requestAnimationFrame(frame);
+    if (u < 1) sweeping = requestAnimationFrame(tick);
     else endSweep();
   };
-  sweeping = requestAnimationFrame(frame);
+  sweeping = requestAnimationFrame(tick);
 }
 
 function endSweep() {
-  if (!sweeping) return;
-  cancelAnimationFrame(sweeping);
-  sweeping = null;
-  const btn = document.getElementById("rulPlay");
-  if (btn) btn.textContent = "Sweep lattice → Earth";
+  if (sweeping) { cancelAnimationFrame(sweeping); sweeping = null; }
+  const btn = document.getElementById("rulSweep");
+  if (btn) { btn.classList.remove("on"); btn.textContent = "sweep the full stack"; }
 }
 
 function stops() {
   const host = document.getElementById("rulStops");
   if (!host) return;
-  host.innerHTML = (D.stops || []).map(s =>
-    `<button class="rul__stop" data-id="${s.id}"><b>${s.label}</b><span>${s.sub}</span></button>`).join("");
+  host.innerHTML = (D.stops || []).map(st => {
+    const targetObj = objects.find(o => o.id === st.id);
+    const zVal = targetObj ? targetObj.lg : (st.z || 0);
+    return `<button class="rul__stop" data-z="${zVal}"><b>${esc(st.label || st.name)}</b><span>${esc(st.sub)}</span></button>`;
+  }).join("");
 
   host.querySelectorAll(".rul__stop").forEach(b =>
-    b.addEventListener("click", () => focus(b.dataset.id)));
+    b.addEventListener("click", () => jump(+b.dataset.z)));
 }
 
 function size() {
@@ -238,80 +253,82 @@ function size() {
   W = Math.max(360, r.width || 1200);
   H = Math.max(380, r.height || 560);
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  shown = null;
   paint();
 }
 
 export async function initRuler() {
-  const url = new URL("../../data/static/ruler.json", import.meta.url);
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`Could not load ruler.json (${r.status})`);
+  const r = await fetch(new URL("../../data/static/ruler.json", import.meta.url));
   D = await r.json();
 
   svg = document.getElementById("rulSvg");
-  stage = svg.closest(".rul__stage");
+  stage = svg.parentElement;
+  svg.innerHTML = "";
+  gWorld = document.createElementNS(NS, "g");
+  gAxis = document.createElementNS(NS, "g");
+  svg.appendChild(gWorld);
+  svg.appendChild(gAxis);
 
-  svg.innerHTML = `<g id="rulWorld"></g><g id="rulAxis"></g>`;
-  gWorld = document.getElementById("rulWorld");
-  gAxis = document.getElementById("rulAxis");
-
-  objects = (D.objects || []).map(o => ({
-    ...o,
-    lg: Math.log10(o.size),
-    svg: drawGlyph(o.glyph, o.color || "currentColor")
-  }));
+  objects = (D.objects || []).slice().sort((a, b) => a.m - b.m).map((o, i) => {
+    const cycle = (LANES - 1) * 2;
+    const pos = i % cycle;
+    const track = pos < LANES ? pos : cycle - pos;
+    const st = app.byId[o.station];
+    const col = st ? app.col(st.L) : "var(--pls)";
+    return {
+      ...o,
+      lg: Math.log10(o.m),
+      lane: track,
+      svg: drawGlyph(o.glyph, col, o.sub)
+    };
+  });
 
   stops();
 
-  const range = document.getElementById("rulRange");
-  range.min = String(D.meta.span[0]);
-  range.max = String(D.meta.span[1]);
-  range.step = "0.01";
-  range.value = String(z);
-
-  range.addEventListener("input", e => jump(+e.target.value));
-
-  stage.addEventListener("wheel", e => {
+  svg.addEventListener("wheel", e => {
     e.preventDefault();
-    const d = (e.deltaX + e.deltaY) * (e.deltaMode === 1 ? 16 : 1);
-    jump(target + (d * WHEEL_PX) / PX_DECADE);
+    endSweep();
+    const dz = (e.deltaX + e.deltaY) * 0.0016;
+    jump(z + dz);
   }, { passive: false });
 
-  stage.addEventListener("pointerdown", e => {
-    if (e.target.closest(".rul__o")) return;
+  svg.addEventListener("pointerdown", e => {
     dragging = { x: e.clientX, z };
-    stage.setPointerCapture(e.pointerId);
-    stage.classList.add("drag");
+    svg.setPointerCapture(e.pointerId);
+    svg.classList.add("drag");
   });
-  stage.addEventListener("pointermove", e => {
+  svg.addEventListener("pointermove", e => {
     if (!dragging) return;
-    endSweep();
-    if (raf) { cancelAnimationFrame(raf); raf = null; }
-    z = target = clamp(dragging.z - (e.clientX - dragging.x) / PX_DECADE);
-    paint();
+    const dx = e.clientX - dragging.x;
+    jump(dragging.z - dx / PX_DECADE);
   });
-  const stopDrag = () => { dragging = null; stage.classList.remove("drag"); };
-  stage.addEventListener("pointerup", stopDrag);
-  stage.addEventListener("pointercancel", stopDrag);
+  const stop = () => { dragging = null; svg.classList.remove("drag"); };
+  svg.addEventListener("pointerup", stop);
+  svg.addEventListener("pointercancel", stop);
 
-  const playBtn = document.getElementById("rulPlay");
-  if (playBtn) playBtn.addEventListener("click", sweep);
+  const range = document.getElementById("rulRange");
+  if (range) {
+    range.min = String(D.meta.span[0]);
+    range.max = String(D.meta.span[1]);
+    range.step = "0.01";
+    range.addEventListener("input", () => jump(+range.value));
+  }
+
+  document.getElementById("rulSweep")?.addEventListener("click", sweep);
 
   addEventListener("keydown", e => {
     if (!document.getElementById("v-rul").classList.contains("on")) return;
     if (e.target.tagName === "INPUT") return;
-    if (e.key === "ArrowRight") { jump(target + 0.5); e.preventDefault(); }
-    if (e.key === "ArrowLeft") { jump(target - 0.5); e.preventDefault(); }
+    if (e.key === "ArrowRight") { jump(z + 0.25); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { jump(z - 0.25); e.preventDefault(); }
   });
 
   addEventListener("resize", () => {
     if (document.getElementById("v-rul").classList.contains("on")) size();
   });
 
-  const pxLabel = document.getElementById("rulPxDecade");
-  if (pxLabel) pxLabel.textContent = PX_DECADE;
-
-  app.rulerGoTo = focus;
+  app.rulerGoTo = id => focus(id);
   app.rulerFit = size;
+
   size();
+  focus(objects[0]?.id || "ndfeb-lattice");
 }
